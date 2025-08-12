@@ -170,6 +170,8 @@ let agentSettings: Record<string, AgentSettings> = {
 };
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
 
 // --- API FUNCTIONS ---
 
@@ -212,7 +214,7 @@ export const mockApi = {
   async createAccessKey(data: { name: string; role: UserRole }): Promise<AccessKey> {
     await delay(500);
     const newKey: AccessKey = {
-      id: `key-${Date.now()}`,
+      id: generateId('key'),
       key: `${data.role.toUpperCase()}-${data.name.toUpperCase().replace(/\s/g, "")}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       role: data.role,
       name: data.name,
@@ -224,7 +226,7 @@ export const mockApi = {
 
     if (newKey.role === 'agent') {
         const newAgent: Agent = {
-            id: `agent-${Date.now()}`,
+            id: generateId('agent'),
             name: newKey.name,
             avatar: `https://i.pravatar.cc/150?u=${newKey.id}`,
             status: "offline",
@@ -295,7 +297,7 @@ export const mockApi = {
     const session = chatSessions.find(s => s.id === sessionId);
     if (!session) throw new Error("Session not found");
 
-    const newMessage = { ...message, id: `msg-${Date.now()}-${Math.random()}`, timestamp: new Date().toISOString() };
+    const newMessage = { ...message, id: generateId('msg'), timestamp: new Date().toISOString() };
     
     // Ensure message ID is unique before pushing
     if (!session.messages.some(m => m.id === newMessage.id)) {
@@ -343,10 +345,11 @@ export const mockApi = {
 
       // For simplicity, we'll create a new customer and session for each visit.
       // In a real app, you'd use cookies or localStorage to identify returning visitors.
+      const customerId = generateId('cust');
       const newCustomer: Customer = {
-          id: `cust-${Date.now()}`,
+          id: customerId,
           name: `访客 ${Math.floor(Math.random() * 1000)}`,
-          avatar: `https://i.pravatar.cc/150?u=visitor${Date.now()}`,
+          avatar: `https://i.pravatar.cc/150?u=${customerId}`,
           ipAddress: "192.168.1.100",
           device: "Chrome on Windows",
           location: "美国，旧金山",
@@ -357,13 +360,13 @@ export const mockApi = {
       const welcomeMessage = agentSettings[agent.id]?.welcomeMessage || "您好！有什么可以帮您的吗？";
       
       const newSession: ChatSession = {
-          id: `session-${Date.now()}`,
+          id: generateId('session'),
           customerId: newCustomer.id,
           agentId: agent.id,
           status: "pending",
           createdAt: new Date().toISOString(),
           messages: [{
-            id: `msg-${Date.now()}-${Math.random()}`,
+            id: generateId('msg'),
             text: welcomeMessage,
             sender: 'agent',
             agentId: agent.id,
