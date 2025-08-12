@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { mockApi } from "@/lib/mock-api";
-import type { Agent, AgentSettings, AgentStatus, ChatMessage, ChatSession, Customer } from "@/lib/types";
+import type { AccessKey, Agent, AgentSettings, AgentStatus, ChatMessage, ChatSession, Customer } from "@/lib/types";
 
 interface AgentState {
   agent: Agent | null;
@@ -10,6 +10,7 @@ interface AgentState {
   activeSessionId: string | null;
   isLoading: boolean;
   error: string | null;
+  key: AccessKey | null;
 
   fetchAgentData: (agentId: string) => Promise<void>;
   setActiveSessionId: (sessionId: string | null) => void;
@@ -39,6 +40,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   activeSessionId: null,
   isLoading: false,
   error: null,
+  key: null,
 
   fetchAgentData: async (agentId) => {
     set({ isLoading: true });
@@ -50,6 +52,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
           sessions: data.sessions,
           customers: data.customers,
           settings: data.settings,
+          key: data.key,
           isLoading: false,
           activeSessionId: data.sessions.find(s => s.status === 'active')?.id || data.sessions[0]?.id || null,
         });

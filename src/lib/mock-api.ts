@@ -13,6 +13,9 @@ import {
 } from "./types";
 import { ADMIN_KEY } from "./constants";
 
+const getFutureDate = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+
+
 // --- IN-MEMORY DATABASE ---
 
 let accessKeys: AccessKey[] = [
@@ -24,6 +27,7 @@ let accessKeys: AccessKey[] = [
     status: "active",
     createdAt: new Date().toISOString(),
     lastUsedAt: null,
+    expiresAt: null, // Admins don't expire
   },
   {
     id: "key-agent-01",
@@ -33,6 +37,7 @@ let accessKeys: AccessKey[] = [
     status: "active",
     createdAt: new Date().toISOString(),
     lastUsedAt: null,
+    expiresAt: getFutureDate(30),
   },
   {
     id: "key-agent-02",
@@ -42,6 +47,7 @@ let accessKeys: AccessKey[] = [
     status: "active",
     createdAt: new Date().toISOString(),
     lastUsedAt: null,
+    expiresAt: getFutureDate(7),
   },
   {
     id: "key-agent-03",
@@ -51,6 +57,7 @@ let accessKeys: AccessKey[] = [
     status: "suspended",
     createdAt: new Date().toISOString(),
     lastUsedAt: null,
+    expiresAt: new Date().toISOString(),
   },
 ];
 
@@ -182,6 +189,13 @@ export const mockApi = {
     if (!accessKey) {
       return null;
     }
+    
+    // Check for expiration
+    if (accessKey.expiresAt && new Date(accessKey.expiresAt) < new Date()) {
+      accessKey.status = 'suspended'; // Mark as suspended if expired
+      return null;
+    }
+
     accessKey.lastUsedAt = new Date().toISOString();
 
     if (accessKey.role === 'admin') {
@@ -221,6 +235,7 @@ export const mockApi = {
       status: "active",
       createdAt: new Date().toISOString(),
       lastUsedAt: null,
+      expiresAt: data.role === 'agent' ? getFutureDate(30) : null,
     };
     accessKeys.push(newKey);
 
@@ -289,8 +304,9 @@ export const mockApi = {
     const customerIds = sessions.map(s => s.customerId);
     const relevantCustomers = customers.filter(c => customerIds.includes(c.id));
     const settings = agentSettings[agentId];
+    const key = accessKeys.find(k => k.id === agent.accessKeyId) || null;
 
-    return { agent, sessions, customers: relevantCustomers, settings };
+    return { agent, sessions, customers: relevantCustomers, settings, key };
   },
 
   async sendMessage(sessionId: string, message: ChatMessage): Promise<ChatMessage> {

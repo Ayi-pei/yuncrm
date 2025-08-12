@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { useAgentStore } from "@/lib/stores/agentStore";
 import { useAuthStore } from "@/lib/stores/authStore";
@@ -11,7 +11,12 @@ import { Textarea } from "../ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import type { AgentSettings, QuickReply } from "@/lib/types";
-import { PlusCircle, Trash } from "lucide-react";
+import { PlusCircle, Trash, KeyRound, Bell } from "lucide-react";
+import { formatDistanceToNow, parseISO } from "date-fns";
+import { zhCN } from 'date-fns/locale';
+import { Switch } from "../ui/switch";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+
 
 interface AgentSettingsDialogProps {
     isOpen: boolean;
@@ -19,13 +24,14 @@ interface AgentSettingsDialogProps {
 }
 
 export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogProps) {
-    const { agent, settings, updateProfile, updateSettings } = useAgentStore();
+    const { agent, settings, key, updateProfile, updateSettings } = useAgentStore();
     const { updateCurrentUser } = useAuthStore();
     const { toast } = useToast();
     
     const [name, setName] = useState(agent?.name || "");
     const [welcomeMessage, setWelcomeMessage] = useState(settings?.welcomeMessage || "");
     const [quickReplies, setQuickReplies] = useState<QuickReply[]>(settings?.quickReplies || []);
+    const [showReminder, setShowReminder] = useState(true);
 
     useEffect(() => {
         if(agent) setName(agent.name);
@@ -34,6 +40,24 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
             setQuickReplies(settings.quickReplies);
         }
     }, [agent, settings, isOpen]);
+
+    useEffect(() => {
+        if (!key?.expiresAt || !showReminder) return;
+
+        const checkExpiration = () => {
+            const expiresIn = parseISO(key.expiresAt!).getTime() - Date.now();
+            const oneHour = 60 * 60 * 1000;
+            if (expiresIn > 0 && expiresIn < oneHour) {
+                toast({
+                    title: "密钥即将到期提醒",
+                    description: `您的坐席密钥将在大约一小时内到期。请及时延续。`,
+                });
+            }
+        };
+
+        const interval = setInterval(checkExpiration, 60 * 1000); // Check every minute
+        return () => clearInterval(interval);
+    }, [key, showReminder, toast]);
 
     if (!agent || !settings) return null;
 
@@ -67,6 +91,24 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
     const removeQuickReply = (id: string) => {
         setQuickReplies(quickReplies.filter(qr => qr.id !== id));
     }
+    
+    const getRemainingTime = () => {
+        if(!key?.expiresAt) return "无到期限制";
+        const expiresDate = parseISO(key.expiresAt);
+        if (expiresDate < new Date()) {
+            return "已过期";
+        }
+        return formatDistanceToNow(expiresDate, { addSuffix: true, locale: zhCN });
+    }
+
+    const handleExtendKey = () => {
+        // This is a placeholder for the actual API call
+        toast({
+            title: "功能待实现",
+            description: "密钥延续功能正在开发中。",
+            variant: "destructive"
+        })
+    }
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -76,9 +118,10 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
                     <DialogDescription>管理您的个人资料和聊天设置。</DialogDescription>
                 </DialogHeader>
                 <Tabs defaultValue="profile">
-                    <TabsList>
+                    <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="profile">个人资料</TabsTrigger>
                         <TabsTrigger value="chat">聊天设置</TabsTrigger>
+                        <TabsTrigger value="key">密钥信息</TabsTrigger>
                     </TabsList>
                     <TabsContent value="profile" className="p-1">
                         <div className="space-y-4 py-4">
@@ -115,6 +158,48 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
                             </div>
                         </div>
                          <Button onClick={handleSettingsSave}>保存聊天设置</Button>
+                    </TabsContent>
+                    <TabsContent value="key" className="p-1">
+                        <div className="space-y-6 py-4">
+                             <Alert>
+                                <KeyRound className="h-4 w-4" />
+                                <AlertTitle>当前密钥信息</AlertTitle>
+                                <AlertDescription>
+                                    <div className="mt-2 space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">坐席位</span>
+                                            <span>{agent.name}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">剩余时间</span>
+                                            <span className="font-semibold">{getRemainingTime()}</span>
+                                        </div>
+                                    </div>
+                                </AlertDescription>
+                            </Alert>
+                            
+                             <div className="space-y-2">
+                                <Label htmlFor="extend-key">延续</Label>
+                                <p className="text-sm text-muted-foreground">粘贴其它未使用过的密钥，以支持当前坐席位的使用。</p>
+                                <div className="flex gap-2">
+                                    <Input id="extend-key" placeholder="在此处粘贴新密钥" />
+                                    <Button onClick={handleExtendKey}>延续</Button>
+                                </div>
+                            </div>
+
+                             <div className="space-y-2">
+                                <Label>提醒</Label>
+                                <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <p className="text-sm font-medium">到期提醒</p>
+                                        <p className="text-xs text-muted-foreground">
+                                           在密钥到期前1小时，系统将弹出友好提示。
+                                        </p>
+                                    </div>
+                                    <Switch checked={showReminder} onCheckedChange={setShowReminder} />
+                                </div>
+                            </div>
+                        </div>
                     </TabsContent>
                 </Tabs>
             </DialogContent>

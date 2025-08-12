@@ -8,6 +8,7 @@ export interface AccessKey {
   status: "active" | "suspended";
   createdAt: string;
   lastUsedAt: string | null;
+  expiresAt: string | null;
 }
 
 export type AgentStatus = "online" | "busy" | "offline";
