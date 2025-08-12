@@ -20,6 +20,17 @@ interface AgentState {
   pollSessionUpdates: (sessionId: string) => Promise<void>;
 }
 
+// Helper to fetch and update a single session
+async function _fetchSession(sessionId: string, set: (fn: (state: AgentState) => Partial<AgentState>) => void) {
+    const updatedSession = await mockApi.getSessionUpdates(sessionId);
+    if (updatedSession) {
+        set(state => ({
+            sessions: state.sessions.map(s => s.id === sessionId ? updatedSession : s),
+        }));
+    }
+}
+
+
 export const useAgentStore = create<AgentState>((set, get) => ({
   agent: null,
   sessions: [],
@@ -58,12 +69,10 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         timestamp: new Date().toISOString(),
         agentId: get().agent?.id,
     }
-    const newMessage = await mockApi.sendMessage(sessionId, message);
-    set(state => ({
-        sessions: state.sessions.map(s => 
-            s.id === sessionId ? { ...s, messages: [...s.messages, newMessage] } : s
-        )
-    }));
+    // Send the message via API
+    await mockApi.sendMessage(sessionId, message);
+    // Fetch the updated session from the single source of truth (the API)
+    await _fetchSession(sessionId, set);
   },
   updateStatus: async (agentId, status) => {
     const updatedAgent = await mockApi.updateAgentStatus(agentId, status);
@@ -84,18 +93,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     }
   },
   pollSessionUpdates: async (sessionId: string) => {
-    const updatedSession = await mockApi.getSessionUpdates(sessionId);
-    if (updatedSession) {
-      set(state => {
-        const existingSession = state.sessions.find(s => s.id === sessionId);
-        // Only update if there are new messages
-        if (existingSession && updatedSession.messages.length > existingSession.messages.length) {
-          return {
-            sessions: state.sessions.map(s => s.id === sessionId ? updatedSession : s)
-          };
-        }
-        return state;
-      });
-    }
+    // This function can now leverage the same helper
+    await _fetchSession(sessionId, set);
   },
 }));
