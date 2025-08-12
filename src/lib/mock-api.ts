@@ -298,20 +298,6 @@ export const mockApi = {
     const newMessage = { ...message, id: `msg-${Date.now()}`, timestamp: new Date().toISOString() };
     session.messages.push(newMessage);
     
-    // Simulate agent response
-    if(message.sender === 'customer') {
-        setTimeout(() => {
-            const agentResponse: ChatMessage = {
-                id: `msg-${Date.now() + 1}`,
-                text: "感谢您的留言。稍后将有客服人员与您联系。",
-                sender: 'agent',
-                timestamp: new Date().toISOString(),
-                agentId: session.agentId,
-            }
-            session.messages.push(agentResponse);
-        }, 2000);
-    }
-
     return newMessage;
   },
 
