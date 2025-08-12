@@ -170,7 +170,7 @@ let agentSettings: Record<string, AgentSettings> = {
 };
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
-const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 
 
 // --- API FUNCTIONS ---
@@ -225,12 +225,13 @@ export const mockApi = {
     accessKeys.push(newKey);
 
     if (newKey.role === 'agent') {
+        const agentId = generateId('agent');
         const newAgent: Agent = {
-            id: generateId('agent'),
+            id: agentId,
             name: newKey.name,
-            avatar: `https://i.pravatar.cc/150?u=${newKey.id}`,
+            avatar: `https://i.pravatar.cc/150?u=${agentId}`,
             status: "offline",
-            shareId: `chat-with-${newKey.name.toLowerCase().replace(/\s/g, "-")}`,
+            shareId: `chat-with-${newKey.name.toLowerCase().replace(/\s/g, "-")}-${agentId.slice(-4)}`,
             sessionLoad: 0,
             maxLoad: 5,
             accessKeyId: newKey.id,
