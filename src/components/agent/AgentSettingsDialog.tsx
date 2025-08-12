@@ -11,7 +11,7 @@ import { Textarea } from "../ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import type { AgentSettings, QuickReply } from "@/lib/types";
-import { PlusCircle, Trash, KeyRound, Bell } from "lucide-react";
+import { PlusCircle, Trash, KeyRound, Bell, Loader2 } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { zhCN } from 'date-fns/locale';
 import { Switch } from "../ui/switch";
@@ -24,7 +24,7 @@ interface AgentSettingsDialogProps {
 }
 
 export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogProps) {
-    const { agent, settings, key, updateProfile, updateSettings } = useAgentStore();
+    const { agent, settings, key, updateProfile, updateSettings, extendKey, isExtendingKey, error } = useAgentStore();
     const { updateCurrentUser } = useAuthStore();
     const { toast } = useToast();
     
@@ -32,6 +32,7 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
     const [welcomeMessage, setWelcomeMessage] = useState(settings?.welcomeMessage || "");
     const [quickReplies, setQuickReplies] = useState<QuickReply[]>(settings?.quickReplies || []);
     const [showReminder, setShowReminder] = useState(true);
+    const [newKey, setNewKey] = useState("");
 
     useEffect(() => {
         if(agent) setName(agent.name);
@@ -39,6 +40,7 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
             setWelcomeMessage(settings.welcomeMessage);
             setQuickReplies(settings.quickReplies);
         }
+        setNewKey(""); // Reset on open
     }, [agent, settings, isOpen]);
 
     useEffect(() => {
@@ -101,13 +103,22 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
         return formatDistanceToNow(expiresDate, { addSuffix: true, locale: zhCN });
     }
 
-    const handleExtendKey = () => {
-        // This is a placeholder for the actual API call
-        toast({
-            title: "功能待实现",
-            description: "密钥延续功能正在开发中。",
-            variant: "destructive"
-        })
+    const handleExtendKey = async () => {
+        if (!newKey.trim() || !agent) return;
+        const success = await extendKey(agent.id, newKey);
+        if(success) {
+            toast({
+                title: "密钥已延续",
+                description: "坐席位有效期已成功延长。",
+            });
+            setNewKey("");
+        } else {
+             toast({
+                title: "延续失败",
+                description: error || "无法使用该密钥。请检查密钥是否正确、未使用且为智能体角色。",
+                variant: "destructive"
+            })
+        }
     }
 
     return (
@@ -182,8 +193,17 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
                                 <Label htmlFor="extend-key">延续</Label>
                                 <p className="text-sm text-muted-foreground">粘贴其它未使用过的密钥，以支持当前坐席位的使用。</p>
                                 <div className="flex gap-2">
-                                    <Input id="extend-key" placeholder="在此处粘贴新密钥" />
-                                    <Button onClick={handleExtendKey}>延续</Button>
+                                    <Input 
+                                        id="extend-key" 
+                                        placeholder="在此处粘贴新密钥" 
+                                        value={newKey}
+                                        onChange={(e) => setNewKey(e.target.value)}
+                                        disabled={isExtendingKey}
+                                    />
+                                    <Button onClick={handleExtendKey} disabled={isExtendingKey || !newKey}>
+                                        {isExtendingKey && <Loader2 className="animate-spin" />}
+                                        延续
+                                    </Button>
                                 </div>
                             </div>
 

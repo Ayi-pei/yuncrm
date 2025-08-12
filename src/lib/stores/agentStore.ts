@@ -9,6 +9,7 @@ interface AgentState {
   settings: AgentSettings | null;
   activeSessionId: string | null;
   isLoading: boolean;
+  isExtendingKey: boolean;
   error: string | null;
   key: AccessKey | null;
 
@@ -19,6 +20,7 @@ interface AgentState {
   updateProfile: (agentId: string, updates: { name?: string; avatar?: string }) => Promise<void>;
   updateSettings: (agentId: string, settings: AgentSettings) => Promise<void>;
   pollSessionUpdates: (sessionId: string) => Promise<void>;
+  extendKey: (agentId: string, newKeyString: string) => Promise<boolean>;
 }
 
 // Helper to fetch and update a single session
@@ -39,6 +41,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   settings: null,
   activeSessionId: null,
   isLoading: false,
+  isExtendingKey: false,
   error: null,
   key: null,
 
@@ -98,5 +101,19 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   pollSessionUpdates: async (sessionId: string) => {
     // This function can now leverage the same helper
     await _fetchSession(sessionId, set);
+  },
+  extendKey: async (agentId, newKeyString) => {
+    set({ isExtendingKey: true, error: null });
+    try {
+        const updatedKey = await mockApi.extendAgentKey(agentId, newKeyString);
+        if (updatedKey) {
+            set({ key: updatedKey, isExtendingKey: false });
+            return true;
+        }
+        return false;
+    } catch (e) {
+        set({ error: e instanceof Error ? e.message : "Failed to extend key", isExtendingKey: false });
+        return false;
+    }
   },
 }));

@@ -12,6 +12,8 @@ import {
   UserRole,
 } from "./types";
 import { ADMIN_KEY } from "./constants";
+import { add, differenceInMilliseconds } from 'date-fns';
+
 
 const getFutureDate = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
@@ -58,6 +60,16 @@ let accessKeys: AccessKey[] = [
     createdAt: new Date().toISOString(),
     lastUsedAt: null,
     expiresAt: new Date().toISOString(),
+  },
+  {
+    id: 'key-agent-04',
+    key: 'AGENT-UNUSED-001',
+    role: 'agent',
+    name: '备用密钥1',
+    status: 'active',
+    createdAt: new Date().toISOString(),
+    lastUsedAt: null,
+    expiresAt: getFutureDate(15),
   },
 ];
 
@@ -352,6 +364,48 @@ export const mockApi = {
     }
     return null;
   },
+
+  async extendAgentKey(agentId: string, newKeyString: string): Promise<AccessKey | null> {
+      await delay(600);
+      const agent = agents.find(a => a.id === agentId);
+      if (!agent) {
+          throw new Error("坐席不存在。");
+      }
+
+      const currentKey = accessKeys.find(k => k.id === agent.accessKeyId);
+      if (!currentKey) {
+          throw new Error("当前坐席密钥不存在。");
+      }
+
+      const newKey = accessKeys.find(k => k.key === newKeyString);
+      if (!newKey) {
+          throw new Error("提供的新密钥无效。");
+      }
+      if (newKey.status !== 'active' || newKey.role !== 'agent' || newKey.lastUsedAt !== null) {
+          throw new Error("该密钥不可用（可能已被使用、暂停或角色不符）。");
+      }
+      if (!newKey.expiresAt) {
+          throw new Error("该密钥没有设置到期时间。");
+      }
+
+      const now = new Date();
+      const newKeyExpiresAt = new Date(newKey.expiresAt);
+      if (newKeyExpiresAt < now) {
+          throw new Error("该密钥已过期。");
+      }
+      
+      const timeToAdd = differenceInMilliseconds(newKeyExpiresAt, now);
+      
+      const currentKeyExpiresAt = currentKey.expiresAt ? new Date(currentKey.expiresAt) : now;
+      const newExpiryDate = add(currentKeyExpiresAt, { milliseconds: timeToAdd });
+      
+      currentKey.expiresAt = newExpiryDate.toISOString();
+      newKey.status = 'suspended';
+      newKey.lastUsedAt = now.toISOString();
+
+      return currentKey;
+  },
+
 
   // --- Visitor Functions ---
   async getChatDataForVisitor(shareId: string) {
