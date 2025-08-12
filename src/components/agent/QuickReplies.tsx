@@ -2,7 +2,7 @@
 
 import { useAgentStore } from "@/lib/stores/agentStore";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { MessageSquareQuote, PlusCircle, Send } from "lucide-react";
+import { MessageSquareQuote, Send } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 import { Button } from "../ui/button";
 
@@ -24,9 +24,6 @@ export function QuickReplies() {
             <CardHeader>
                 <CardTitle className="text-base flex items-center justify-between">
                     <span>快捷回复</span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                        <PlusCircle className="h-4 w-4" />
-                    </Button>
                 </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 p-0">
