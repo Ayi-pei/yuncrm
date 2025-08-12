@@ -294,9 +294,13 @@ export const mockApi = {
     await delay(250);
     const session = chatSessions.find(s => s.id === sessionId);
     if (!session) throw new Error("Session not found");
-    
+
     const newMessage = { ...message, id: `msg-${Date.now()}-${Math.random()}`, timestamp: new Date().toISOString() };
-    session.messages.push(newMessage);
+    
+    // Ensure message ID is unique before pushing
+    if (!session.messages.some(m => m.id === newMessage.id)) {
+        session.messages.push(newMessage);
+    }
     
     return newMessage;
   },
