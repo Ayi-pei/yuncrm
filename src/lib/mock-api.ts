@@ -293,9 +293,9 @@ export const mockApi = {
   async sendMessage(sessionId: string, message: ChatMessage): Promise<ChatMessage> {
     await delay(250);
     const session = chatSessions.find(s => s.id === sessionId);
-    if(!session) throw new Error("Session not found");
+    if (!session) throw new Error("Session not found");
     
-    const newMessage = { ...message, id: `msg-${Date.now()}`, timestamp: new Date().toISOString() };
+    const newMessage = { ...message, id: `msg-${Date.now()}-${Math.random()}`, timestamp: new Date().toISOString() };
     session.messages.push(newMessage);
     
     return newMessage;
@@ -359,7 +359,7 @@ export const mockApi = {
           status: "pending",
           createdAt: new Date().toISOString(),
           messages: [{
-            id: `msg-${Date.now()}`,
+            id: `msg-${Date.now()}-${Math.random()}`,
             text: welcomeMessage,
             sender: 'agent',
             agentId: agent.id,

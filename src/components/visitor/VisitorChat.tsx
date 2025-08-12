@@ -60,7 +60,7 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
             }, 3000); // Poll every 3 seconds
             return () => clearInterval(interval);
         }
-    }, [data]);
+    }, [data?.session.id, data?.session.messages.length]);
     
     useEffect(() => {
         if (scrollAreaRef.current) {
