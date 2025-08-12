@@ -35,7 +35,6 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
     useEffect(() => {
         const initChat = async () => {
             try {
-                // In a real app, you might want to prevent re-fetching if data already exists.
                 const chatData = await mockApi.getChatDataForVisitor(shareId);
                 if (!chatData) {
                     setError("此聊天链接无效或代理不再可用。");
@@ -51,8 +50,6 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
         initChat();
     }, [shareId]);
 
-    // Polling is removed to prevent duplicate messages from race conditions.
-    // In a real app, use WebSockets (e.g., Socket.io, Firebase Realtime DB) for live updates.
     useEffect(() => {
         if (data?.session.id) {
             const handleManualPoll = async () => {
@@ -61,8 +58,6 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
                      setData(d => d ? { ...d, session: updatedSession } : null);
                  }
             }
-            // This is a simplified stand-in for a proper real-time solution.
-            // It just checks once after a short delay.
             const timer = setTimeout(handleManualPoll, 1500);
             return () => clearTimeout(timer);
         }
@@ -78,25 +73,22 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
         if (!message.trim() || !data) return;
         setIsSending(true);
         const newMessage: ChatMessage = {
-            id: '', // will be set by mock api
+            id: '', 
             text: message, 
             sender: 'customer', 
             timestamp: new Date().toISOString()
         };
         try {
-            const sentMessage = await mockApi.sendMessage(data.session.id, newMessage);
-            // The state update now fully relies on the API response
-            setData(d => {
-                if (!d) return null;
-                const newMessages = [...d.session.messages, sentMessage];
-                // Simple deduplication based on ID to be safe
-                const uniqueMessages = Array.from(new Map(newMessages.map(m => [m.id, m])).values());
-                return { ...d, session: { ...d.session, messages: uniqueMessages } };
-            });
+            await mockApi.sendMessage(data.session.id, newMessage);
             setMessage("");
+            
+            const updatedSession = await mockApi.getSessionUpdates(data.session.id);
+            if (updatedSession) {
+                setData(d => d ? { ...d, session: updatedSession } : null);
+            }
+
         } catch(e) {
             console.error("Failed to send message", e);
-            // Optionally: show an error to the user
         } finally {
             setIsSending(false);
         }

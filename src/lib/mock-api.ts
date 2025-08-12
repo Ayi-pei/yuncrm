@@ -170,7 +170,7 @@ let agentSettings: Record<string, AgentSettings> = {
 };
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
-const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 
 // --- API FUNCTIONS ---
@@ -231,7 +231,7 @@ export const mockApi = {
             name: newKey.name,
             avatar: `https://i.pravatar.cc/150?u=${agentId}`,
             status: "offline",
-            shareId: `chat-with-${newKey.name.toLowerCase().replace(/\s/g, "-")}-${agentId.slice(-4)}`,
+            shareId: `chat-with-${newKey.name.toLowerCase().replace(/\s/g, "-")}-${generateId('')}`,
             sessionLoad: 0,
             maxLoad: 5,
             accessKeyId: newKey.id,
@@ -300,7 +300,6 @@ export const mockApi = {
 
     const newMessage = { ...message, id: generateId('msg'), timestamp: new Date().toISOString() };
     
-    // Ensure message ID is unique before pushing
     if (!session.messages.some(m => m.id === newMessage.id)) {
         session.messages.push(newMessage);
     }
@@ -344,8 +343,6 @@ export const mockApi = {
       const agent = agents.find(a => a.shareId === shareId);
       if(!agent) return null;
 
-      // For simplicity, we'll create a new customer and session for each visit.
-      // In a real app, you'd use cookies or localStorage to identify returning visitors.
       const customerId = generateId('cust');
       const newCustomer: Customer = {
           id: customerId,
