@@ -12,10 +12,10 @@ interface CustomerDetailsProps {
 
 export function CustomerDetails({ customer }: CustomerDetailsProps) {
     const details = [
-        { icon: Globe, label: "IP Address", value: customer.ipAddress },
-        { icon: HardDrive, label: "Device", value: customer.device },
-        { icon: MapPin, label: "Location", value: customer.location },
-        { icon: Calendar, label: "First Seen", value: format(new Date(customer.firstSeen), "PPP") },
+        { icon: Globe, label: "IP 地址", value: customer.ipAddress },
+        { icon: HardDrive, label: "设备", value: customer.device },
+        { icon: MapPin, label: "位置", value: customer.location },
+        { icon: Calendar, label: "首次访问", value: format(new Date(customer.firstSeen), "PPP") },
     ];
     
     return (
@@ -29,7 +29,7 @@ export function CustomerDetails({ customer }: CustomerDetailsProps) {
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">Customer Info</CardTitle>
+                    <CardTitle className="text-base">客户信息</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {details.map(detail => (
@@ -45,10 +45,10 @@ export function CustomerDetails({ customer }: CustomerDetailsProps) {
             </Card>
              <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">Session History</CardTitle>
+                    <CardTitle className="text-base">会话历史</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-xs text-muted-foreground text-center">No past sessions with this customer.</p>
+                    <p className="text-xs text-muted-foreground text-center">没有与该客户的过往会话。</p>
                 </CardContent>
             </Card>
         </aside>

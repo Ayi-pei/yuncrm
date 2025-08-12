@@ -26,7 +26,7 @@ export const useAuthStore = create<AuthState>()(
             set({ user, isLoading: false });
             return true;
           } else {
-            set({ error: "Invalid or inactive access key.", isLoading: false });
+            set({ error: "无效或未激活的访问密钥。", isLoading: false });
             return false;
           }
         } catch (e) {

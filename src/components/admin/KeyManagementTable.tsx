@@ -30,7 +30,7 @@ export function KeyManagementTable() {
   
   const handleCopyKey = (key: string) => {
     navigator.clipboard.writeText(key);
-    toast({ title: "Copied!", description: "Access key copied to clipboard." });
+    toast({ title: "已复制！", description: "访问密钥已复制到剪贴板。" });
   };
 
   const handleOpenModal = (key: AccessKey | null = null) => {
@@ -41,32 +41,32 @@ export function KeyManagementTable() {
   const handleToggleStatus = async (key: AccessKey) => {
     const newStatus = key.status === 'active' ? 'suspended' : 'active';
     await updateKey(key.id, { status: newStatus });
-    toast({ title: "Status Updated", description: `Key for ${key.name} has been ${newStatus}.` });
+    toast({ title: "状态已更新", description: `“${key.name}”的密钥已被${newStatus === 'active' ? '激活' : '暂停'}。` });
   };
   
   const handleDelete = async (id: string) => {
     await deleteKey(id);
-    toast({ title: "Key Deleted", description: "The access key has been permanently deleted." });
+    toast({ title: "密钥已删除", description: "访问密钥已被永久删除。" });
   }
 
   return (
     <>
-      <PageHeader title="Key Management" description="Create, edit, and manage access keys for your agents and admins.">
+      <PageHeader title="密钥管理" description="为您的智能体和管理员创建、编辑和管理访问密钥。">
         <Button onClick={() => handleOpenModal()}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Create Key
+          创建密钥
         </Button>
       </PageHeader>
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Last Used</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>名称</TableHead>
+              <TableHead>角色</TableHead>
+              <TableHead>状态</TableHead>
+              <TableHead>上次使用</TableHead>
+              <TableHead>创建于</TableHead>
+              <TableHead className="text-right">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -90,50 +90,49 @@ export function KeyManagementTable() {
                   </TableCell>
                   <TableCell>
                     <Badge variant={key.status === 'active' ? 'outline' : 'destructive'} className={key.status === 'active' ? 'text-green-600 border-green-300' : ''}>
-                      {key.status}
+                      {key.status === 'active' ? '有效' : '暂停'}
                     </Badge>
                   </TableCell>
-                  <TableCell>{key.lastUsedAt ? format(parseISO(key.lastUsedAt), "PPP p") : "Never"}</TableCell>
+                  <TableCell>{key.lastUsedAt ? format(parseISO(key.lastUsedAt), "PPP p") : "从未使用"}</TableCell>
                   <TableCell>{format(parseISO(key.createdAt), "PPP")}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
+                          <span className="sr-only">打开菜单</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel>操作</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleCopyKey(key.key)}>
-                          <Copy className="mr-2 h-4 w-4"/> Copy Key
+                          <Copy className="mr-2 h-4 w-4"/> 复制密钥
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleOpenModal(key)}>
-                          <Edit className="mr-2 h-4 w-4"/> Edit
+                          <Edit className="mr-2 h-4 w-4"/> 编辑
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleToggleStatus(key)}>
                            {key.status === 'active' ? <PowerOff className="mr-2 h-4 w-4"/> : <Power className="mr-2 h-4 w-4"/>}
-                           {key.status === 'active' ? 'Suspend' : 'Activate'}
+                           {key.status === 'active' ? '暂停' : '激活'}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                          <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                                    <Trash className="mr-2 h-4 w-4"/> Delete
+                                    <Trash className="mr-2 h-4 w-4"/> 删除
                                 </DropdownMenuItem>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                                 <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogTitle>您确定吗？</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the key
-                                    and remove all associated data.
+                                    此操作无法撤销。这将永久删除该密钥并移除所有关联数据。
                                 </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogCancel>取消</AlertDialogCancel>
                                 <AlertDialogAction onClick={() => handleDelete(key.id)} className="bg-destructive hover:bg-destructive/90">
-                                    Delete
+                                    删除
                                 </AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
@@ -146,7 +145,7 @@ export function KeyManagementTable() {
             ) : (
                 <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center">
-                        No keys found.
+                        未找到密钥。
                     </TableCell>
                 </TableRow>
             )}
@@ -194,12 +193,12 @@ function KeyFormDialog({ isOpen, setIsOpen, editingKey, createKey, updateKey, to
         e.preventDefault();
         if(editingKey) {
             await updateKey(editingKey.id, { name });
-            toast({ title: "Key Updated", description: "The access key has been successfully updated." });
+            toast({ title: "密钥已更新", description: "访问密钥已成功更新。" });
         } else {
             const newKey = await createKey({ name, role });
             if(newKey) {
                 navigator.clipboard.writeText(newKey.key);
-                toast({ title: "Key Created & Copied", description: "The new key has been copied to your clipboard." });
+                toast({ title: "密钥已创建并复制", description: "新密钥已复制到您的剪贴板。" });
             }
         }
         setIsOpen(false);
@@ -209,27 +208,27 @@ function KeyFormDialog({ isOpen, setIsOpen, editingKey, createKey, updateKey, to
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{editingKey ? 'Edit Key' : 'Create New Key'}</DialogTitle>
+                    <DialogTitle>{editingKey ? '编辑密钥' : '创建新密钥'}</DialogTitle>
                     <DialogDescription>
-                        {editingKey ? "Update the name for this access key." : "A new key will be generated. The associated agent will also be created."}
+                        {editingKey ? "更新此访问密钥的名称。" : "将生成一个新密钥。相关的智能体也将被创建。"}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="name" className="text-right">Name</Label>
-                            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" placeholder="e.g. Support Agent Alice" />
+                            <Label htmlFor="name" className="text-right">名称</Label>
+                            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" placeholder="例如：客服专员小爱" />
                         </div>
                         {!editingKey && (
                             <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="role" className="text-right">Role</Label>
+                                <Label htmlFor="role" className="text-right">角色</Label>
                                 <Select onValueChange={(value: UserRole) => setRole(value)} defaultValue={role}>
                                     <SelectTrigger className="col-span-3">
-                                        <SelectValue placeholder="Select a role" />
+                                        <SelectValue placeholder="选择一个角色" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="agent">Agent</SelectItem>
-                                        <SelectItem value="admin">Admin</SelectItem>
+                                        <SelectItem value="agent">智能体</SelectItem>
+                                        <SelectItem value="admin">管理员</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -237,9 +236,9 @@ function KeyFormDialog({ isOpen, setIsOpen, editingKey, createKey, updateKey, to
                     </div>
                     <DialogFooter>
                         <DialogClose asChild>
-                            <Button type="button" variant="secondary">Cancel</Button>
+                            <Button type="button" variant="secondary">取消</Button>
                         </DialogClose>
-                        <Button type="submit">{editingKey ? 'Save Changes' : 'Create Key'}</Button>
+                        <Button type="submit">{editingKey ? '保存更改' : '创建密钥'}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

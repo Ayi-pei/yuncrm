@@ -37,8 +37,8 @@ export function AgentUI() {
             ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-center text-muted-foreground bg-muted/30">
                     <MessageCircle size={48} className="mb-4" />
-                    <h2 className="text-xl font-semibold">No active conversation</h2>
-                    <p>Select a conversation from the list to start.</p>
+                    <h2 className="text-xl font-semibold">无有效对话</h2>
+                    <p>从列表中选择一个对话开始。</p>
                 </div>
             )}
         </div>

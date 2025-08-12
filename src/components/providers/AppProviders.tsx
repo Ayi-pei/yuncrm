@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Bot } from "lucide-react";
+import { APP_NAME } from "@/lib/constants";
 
 const protectedRoutes = {
   admin: "/admin",
@@ -55,7 +56,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
                 <Bot size={36} />
             </div>
-            <p className="text-muted-foreground animate-pulse">Loading AgentVerse...</p>
+            <p className="text-muted-foreground animate-pulse">正在加载{APP_NAME}...</p>
         </div>
       </div>
     );

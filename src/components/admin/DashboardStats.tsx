@@ -15,22 +15,22 @@ export function DashboardStats() {
 
   const stats = [
     {
-      title: "Total Agents",
+      title: "智能体总数",
       value: dashboardData?.totalAgents,
       icon: Users,
     },
     {
-      title: "Online Agents",
+      title: "在线智能体",
       value: dashboardData?.onlineAgents,
       icon: Wifi,
     },
     {
-      title: "Total Keys",
+      title: "密钥总数",
       value: dashboardData?.totalKeys,
       icon: KeyRound,
     },
     {
-      title: "Active Keys",
+      title: "有效密钥",
       value: dashboardData?.activeKeys,
       icon: Signal,
     },

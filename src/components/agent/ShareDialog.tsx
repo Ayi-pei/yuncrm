@@ -28,16 +28,16 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
     
     const handleCopy = () => {
         navigator.clipboard.writeText(shareUrl);
-        toast({ title: "Copied!", description: "Share link copied to clipboard." });
+        toast({ title: "已复制！", description: "分享链接已复制到剪贴板。" });
     }
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Share Chat Link</DialogTitle>
+                    <DialogTitle>分享聊天链接</DialogTitle>
                     <DialogDescription>
-                        Share this link with visitors to start a chat session with you.
+                        与访客分享此链接以开始与您的聊天会话。
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col items-center gap-6 py-4">

@@ -62,7 +62,7 @@ export function ChatWindow({ session }: ChatWindowProps) {
                 </Avatar>
                 <div>
                     <h2 className="font-semibold text-lg">{customer.name}</h2>
-                    <p className="text-xs text-muted-foreground">Session started: {format(new Date(session.createdAt), "PPP p")}</p>
+                    <p className="text-xs text-muted-foreground">会话开始于: {format(new Date(session.createdAt), "PPP p")}</p>
                 </div>
             </header>
 
@@ -99,7 +99,7 @@ export function ChatWindow({ session }: ChatWindowProps) {
             <footer className="p-4 border-t">
                 <div className="relative">
                     <Textarea 
-                        placeholder="Type your message..." 
+                        placeholder="输入您的消息..." 
                         className="pr-32"
                         rows={3}
                         value={message}
@@ -117,7 +117,7 @@ export function ChatWindow({ session }: ChatWindowProps) {
                         </Button>
                         <Button onClick={handleSend} disabled={!message}>
                             <Send className="h-4 w-4 mr-2" />
-                            Send
+                            发送
                         </Button>
                     </div>
                 </div>

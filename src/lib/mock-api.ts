@@ -20,7 +20,7 @@ let accessKeys: AccessKey[] = [
     id: "key-admin-01",
     key: ADMIN_KEY,
     role: "admin",
-    name: "Default Admin",
+    name: "默认管理员",
     status: "active",
     createdAt: new Date().toISOString(),
     lastUsedAt: null,
@@ -29,7 +29,7 @@ let accessKeys: AccessKey[] = [
     id: "key-agent-01",
     key: "AGENT-ALICE-123",
     role: "agent",
-    name: "Alice",
+    name: "小爱",
     status: "active",
     createdAt: new Date().toISOString(),
     lastUsedAt: null,
@@ -38,7 +38,7 @@ let accessKeys: AccessKey[] = [
     id: "key-agent-02",
     key: "AGENT-BOB-456",
     role: "agent",
-    name: "Bob",
+    name: "小博",
     status: "active",
     createdAt: new Date().toISOString(),
     lastUsedAt: null,
@@ -47,7 +47,7 @@ let accessKeys: AccessKey[] = [
     id: "key-agent-03",
     key: "AGENT-CHARLIE-789",
     role: "agent",
-    name: "Charlie",
+    name: "小驰",
     status: "suspended",
     createdAt: new Date().toISOString(),
     lastUsedAt: null,
@@ -57,7 +57,7 @@ let accessKeys: AccessKey[] = [
 let agents: Agent[] = [
   {
     id: "agent-01",
-    name: "Alice",
+    name: "小爱",
     avatar: "https://i.pravatar.cc/150?u=alice",
     status: "online",
     shareId: "chat-with-alice",
@@ -67,7 +67,7 @@ let agents: Agent[] = [
   },
   {
     id: "agent-02",
-    name: "Bob",
+    name: "小博",
     avatar: "https://i.pravatar.cc/150?u=bob",
     status: "busy",
     shareId: "talk-to-bob",
@@ -77,7 +77,7 @@ let agents: Agent[] = [
   },
   {
     id: "agent-03",
-    name: "Charlie",
+    name: "小驰",
     avatar: "https://i.pravatar.cc/150?u=charlie",
     status: "offline",
     shareId: "help-from-charlie",
@@ -90,20 +90,20 @@ let agents: Agent[] = [
 let customers: Customer[] = [
   {
     id: "cust-01",
-    name: "Visitor 1",
+    name: "访客 1",
     avatar: "https://i.pravatar.cc/150?u=visitor1",
     ipAddress: "123.45.67.89",
     device: "Chrome on macOS",
-    location: "New York, USA",
+    location: "美国，纽约",
     firstSeen: new Date(Date.now() - 86400000 * 2).toISOString(),
   },
   {
     id: "cust-02",
-    name: "Visitor 2",
+    name: "访客 2",
     avatar: "https://i.pravatar.cc/150?u=visitor2",
     ipAddress: "98.76.54.32",
     device: "Safari on iOS",
-    location: "London, UK",
+    location: "英国，伦敦",
     firstSeen: new Date(Date.now() - 86400000).toISOString(),
   },
 ];
@@ -118,13 +118,13 @@ let chatSessions: ChatSession[] = [
     messages: [
       {
         id: "msg-01",
-        text: "Hello, I need help with my order.",
+        text: "你好，我需要订单方面的帮助。",
         sender: "customer",
         timestamp: new Date(Date.now() - 60000 * 5).toISOString(),
       },
       {
         id: "msg-02",
-        text: "Hi there! I can certainly help with that. What is your order number?",
+        text: "您好！我当然可以帮助您。请问您的订单号是多少？",
         sender: "agent",
         agentId: "agent-01",
         timestamp: new Date(Date.now() - 60000 * 4).toISOString(),
@@ -140,7 +140,7 @@ let chatSessions: ChatSession[] = [
     messages: [
       {
         id: "msg-03",
-        text: "I have a question about pricing.",
+        text: "我有一个关于价格的问题。",
         sender: "customer",
         timestamp: new Date(Date.now() - 60000 * 10).toISOString(),
       },
@@ -150,20 +150,20 @@ let chatSessions: ChatSession[] = [
 
 let agentSettings: Record<string, AgentSettings> = {
     "agent-01": {
-        welcomeMessage: "Welcome! How can I help you today?",
+        welcomeMessage: "欢迎！今天有什么可以帮您的吗？",
         quickReplies: [
-            { id: "qr-1", shortcut: "/thanks", message: "You're welcome! Is there anything else I can help with?" },
-            { id: "qr-2", shortcut: "/np", message: "No problem at all!" },
+            { id: "qr-1", shortcut: "/thanks", message: "不客气！还有其他可以帮助您的吗？" },
+            { id: "qr-2", shortcut: "/np", message: "没问题！" },
         ],
         blockedIps: [],
     },
     "agent-02": {
-        welcomeMessage: "Hello, thanks for reaching out.",
+        welcomeMessage: "您好，感谢您的联系。",
         quickReplies: [],
         blockedIps: ["1.2.3.4"],
     },
     "agent-03": {
-        welcomeMessage: "Hi there!",
+        welcomeMessage: "您好！",
         quickReplies: [],
         blockedIps: [],
     }
@@ -183,7 +183,7 @@ export const mockApi = {
     accessKey.lastUsedAt = new Date().toISOString();
 
     if (accessKey.role === 'admin') {
-      return { id: 'admin-user', role: 'admin', name: 'Admin' };
+      return { id: 'admin-user', role: 'admin', name: '管理员' };
     }
 
     const agent = agents.find((a) => a.accessKeyId === accessKey.id);
@@ -234,7 +234,7 @@ export const mockApi = {
             accessKeyId: newKey.id,
         }
         agents.push(newAgent);
-        agentSettings[newAgent.id] = { welcomeMessage: "Welcome!", quickReplies: [], blockedIps: [] };
+        agentSettings[newAgent.id] = { welcomeMessage: "欢迎!", quickReplies: [], blockedIps: [] };
     }
 
     return newKey;
@@ -303,7 +303,7 @@ export const mockApi = {
         setTimeout(() => {
             const agentResponse: ChatMessage = {
                 id: `msg-${Date.now() + 1}`,
-                text: "Thanks for your message. An agent will be with you shortly.",
+                text: "感谢您的留言。稍后将有客服人员与您联系。",
                 sender: 'agent',
                 timestamp: new Date().toISOString(),
                 agentId: session.agentId,
@@ -355,16 +355,16 @@ export const mockApi = {
       // In a real app, you'd use cookies or localStorage to identify returning visitors.
       const newCustomer: Customer = {
           id: `cust-${Date.now()}`,
-          name: `Visitor ${Math.floor(Math.random() * 1000)}`,
+          name: `访客 ${Math.floor(Math.random() * 1000)}`,
           avatar: `https://i.pravatar.cc/150?u=visitor${Date.now()}`,
           ipAddress: "192.168.1.100",
           device: "Chrome on Windows",
-          location: "San Francisco, USA",
+          location: "美国，旧金山",
           firstSeen: new Date().toISOString()
       };
       customers.push(newCustomer);
 
-      const welcomeMessage = agentSettings[agent.id]?.welcomeMessage || "Hello! How can I help you?";
+      const welcomeMessage = agentSettings[agent.id]?.welcomeMessage || "您好！有什么可以帮您的吗？";
       
       const newSession: ChatSession = {
           id: `session-${Date.now()}`,

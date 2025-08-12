@@ -34,7 +34,7 @@ export function LoginForm() {
             <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="password"
-              placeholder="Enter your access key"
+              placeholder="请输入您的访问密钥"
               value={key}
               onChange={(e) => setKey(e.target.value)}
               disabled={isLoading}
@@ -48,7 +48,7 @@ export function LoginForm() {
             {isLoading ? (
               <Loader2 className="animate-spin" />
             ) : (
-              "Unlock"
+              "解锁"
             )}
           </Button>
         </CardFooter>

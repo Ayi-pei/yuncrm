@@ -1,5 +1,6 @@
 import { LoginForm } from "@/components/auth/LoginForm";
 import { Bot } from "lucide-react";
+import { APP_NAME } from "@/lib/constants";
 
 export default function LoginPage() {
   return (
@@ -10,15 +11,15 @@ export default function LoginPage() {
                 <Bot size={36} />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground font-headline">
-                AgentVerse
+                {APP_NAME}
             </h1>
             <p className="mt-2 text-muted-foreground">
-                The AI-powered multi-agent customer service platform.
+                AI 驱动的多智能体客户服务平台。
             </p>
         </div>
         <LoginForm />
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Use <code className="font-mono p-1 bg-muted rounded-sm">ADMIN-SUPER-SECRET</code> for admin access.
+          使用 <code className="font-mono p-1 bg-muted rounded-sm">ADMIN-SUPER-SECRET</code> 获取管理员权限。
         </p>
       </div>
     </main>

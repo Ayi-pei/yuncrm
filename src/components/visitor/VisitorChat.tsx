@@ -37,12 +37,12 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
             try {
                 const chatData = await mockApi.getChatDataForVisitor(shareId);
                 if (!chatData) {
-                    setError("This chat link is invalid or the agent is no longer available.");
+                    setError("此聊天链接无效或代理不再可用。");
                 } else {
                     setData(chatData);
                 }
             } catch (e) {
-                setError("Failed to start chat session.");
+                setError("无法启动聊天会话。");
             } finally {
                 setIsLoading(false);
             }
@@ -90,13 +90,21 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
             setIsRedacting(false);
         }
     };
+    
+    const translateStatus = (status: 'online' | 'busy' | 'offline') => {
+        switch(status) {
+            case 'online': return '在线';
+            case 'busy': return '忙碌';
+            case 'offline': return '离线';
+        }
+    }
 
     if (isLoading) {
         return <LoadingSkeleton />;
     }
 
     if (error || !data) {
-        return <div className="flex-1 flex items-center justify-center p-4 text-center text-destructive">{error || "An unexpected error occurred."}</div>;
+        return <div className="flex-1 flex items-center justify-center p-4 text-center text-destructive">{error || "发生意外错误。"}</div>;
     }
     
     const { agent, session, customer } = data;
@@ -110,7 +118,7 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
                 </Avatar>
                 <div>
                     <h2 className="font-semibold text-lg">{agent.name}</h2>
-                    <p className="text-xs text-muted-foreground capitalize">{agent.status}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{translateStatus(agent.status)}</p>
                 </div>
             </header>
             <ScrollArea className="flex-1" ref={scrollAreaRef}>
@@ -139,7 +147,7 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
              <footer className="p-4 border-t bg-muted/30 rounded-b-2xl">
                 <div className="relative">
                     <Textarea 
-                        placeholder="Type your message..." 
+                        placeholder="输入您的消息..." 
                         className="pr-32 bg-background"
                         rows={2}
                         value={message}
@@ -156,7 +164,7 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
                             {isRedacting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5 text-muted-foreground" />}
                         </Button>
                         <Button onClick={handleSend} disabled={!message || isSending}>
-                           {isSending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />} Send
+                           {isSending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />} 发送
                         </Button>
                     </div>
                 </div>

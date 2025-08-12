@@ -18,9 +18,9 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 const menuItems = [
-  { href: "/admin", label: "Dashboard", icon: BarChart3 },
-  { href: "/admin/keys", label: "Key Management", icon: KeyRound },
-  { href: "/admin/agents", label: "Agent Management", icon: Users },
+  { href: "/admin", label: "仪表盘", icon: BarChart3 },
+  { href: "/admin/keys", label: "密钥管理", icon: KeyRound },
+  { href: "/admin/agents", label: "智能体管理", icon: Users },
 ];
 
 export function AdminSidebar() {
@@ -69,16 +69,16 @@ export function AdminSidebar() {
                 </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel>我的账户</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+                    <span>设置</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
+                    <span>退出登录</span>
                 </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

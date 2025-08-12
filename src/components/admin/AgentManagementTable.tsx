@@ -22,16 +22,24 @@ export function AgentManagementTable() {
         case 'offline': return 'bg-gray-400';
     }
   }
+  
+  const translateStatus = (status: 'online' | 'busy' | 'offline') => {
+    switch(status) {
+        case 'online': return '在线';
+        case 'busy': return '忙碌';
+        case 'offline': return '离线';
+    }
+  }
 
   return (
     <div className="border rounded-lg">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Agent</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Session Load</TableHead>
-            <TableHead>Share ID</TableHead>
+            <TableHead>智能体</TableHead>
+            <TableHead>状态</TableHead>
+            <TableHead>会话负载</TableHead>
+            <TableHead>共享ID</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -59,7 +67,7 @@ export function AgentManagementTable() {
                 <TableCell>
                     <Badge className="capitalize border-none">
                         <span className={`h-2 w-2 rounded-full mr-2 ${getStatusVariant(agent.status)}`}></span>
-                        {agent.status}
+                        {translateStatus(agent.status)}
                     </Badge>
                 </TableCell>
                 <TableCell>
@@ -76,7 +84,7 @@ export function AgentManagementTable() {
           ) : (
             <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">
-                    No agents found.
+                    未找到智能体。
                 </TableCell>
             </TableRow>
           )}

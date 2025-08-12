@@ -30,6 +30,14 @@ export function AgentProfile() {
             case 'offline': return 'text-gray-500';
         }
     }
+
+    const translateStatus = (status: AgentStatus) => {
+        switch(status) {
+            case 'online': return '在线';
+            case 'busy': return '忙碌';
+            case 'offline': return '离线';
+        }
+    }
     
     return (
         <>
@@ -45,30 +53,30 @@ export function AgentProfile() {
                         </div>
                         <div className="flex-1 overflow-hidden">
                             <p className="font-semibold truncate">{agent.name}</p>
-                            <p className="text-sm capitalize truncate" >{agent.status}</p>
+                            <p className="text-sm capitalize truncate" >{translateStatus(agent.status)}</p>
                         </div>
                     </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-64" side="top" align="start">
-                    <DropdownMenuLabel>Status</DropdownMenuLabel>
+                    <DropdownMenuLabel>状态</DropdownMenuLabel>
                     <DropdownMenuRadioGroup value={agent.status} onValueChange={handleStatusChange}>
-                        <DropdownMenuRadioItem value="online"><Wifi className="mr-2 h-4 w-4 text-green-500" />Online</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="busy"><Bell className="mr-2 h-4 w-4 text-orange-500" />Busy</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="offline"><Moon className="mr-2 h-4 w-4 text-gray-500" />Offline</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="online"><Wifi className="mr-2 h-4 w-4 text-green-500" />在线</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="busy"><Bell className="mr-2 h-4 w-4 text-orange-500" />忙碌</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="offline"><Moon className="mr-2 h-4 w-4 text-gray-500" />离线</DropdownMenuRadioItem>
                     </DropdownMenuRadioGroup>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={() => setIsShareOpen(true)}>
                         <Share2 className="mr-2 h-4 w-4" />
-                        <span>Share Chat Link</span>
+                        <span>分享聊天链接</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => setIsSettingsOpen(true)}>
                         <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
+                        <span>设置</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={logout}>
                         <LogOut className="mr-2 h-4 w-4" />
-                        <span>Log Out</span>
+                        <span>退出登录</span>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
