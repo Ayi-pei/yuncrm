@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Globe, HardDrive, MapPin, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { QuickReplies } from "./QuickReplies";
 
 interface CustomerDetailsProps {
     customer: Customer;
@@ -27,30 +29,41 @@ export function CustomerDetails({ customer }: CustomerDetailsProps) {
                 </Avatar>
                 <h2 className="text-xl font-bold">{customer.name}</h2>
             </div>
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-base">客户信息</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {details.map(detail => (
-                        <div key={detail.label} className="flex items-start gap-3 text-sm">
-                            <detail.icon className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                            <div>
-                                <p className="text-muted-foreground">{detail.label}</p>
-                                <p className="font-medium">{detail.value}</p>
-                            </div>
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle className="text-base">会话历史</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-xs text-muted-foreground text-center">没有与该客户的过往会话。</p>
-                </CardContent>
-            </Card>
+             <Tabs defaultValue="info" className="flex-1 flex flex-col">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="info">客户信息</TabsTrigger>
+                    <TabsTrigger value="replies">快捷回复</TabsTrigger>
+                </TabsList>
+                <TabsContent value="info" className="flex-1 flex flex-col gap-6 mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">客户信息</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {details.map(detail => (
+                                <div key={detail.label} className="flex items-start gap-3 text-sm">
+                                    <detail.icon className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                                    <div>
+                                        <p className="text-muted-foreground">{detail.label}</p>
+                                        <p className="font-medium">{detail.value}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">会话历史</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-xs text-muted-foreground text-center">没有与该客户的过往会话。</p>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="replies" className="flex-1 mt-4">
+                     <QuickReplies />
+                </TabsContent>
+            </Tabs>
         </aside>
     );
 }
