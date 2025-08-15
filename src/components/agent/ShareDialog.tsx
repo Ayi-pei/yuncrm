@@ -28,7 +28,7 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
             if (isOpen && user?.id) {
                 setIsLoading(true);
                 try {
-                    // getOrCreateAlias now requires the agentId
+                    // This API call now creates a short-lived, expiring alias token
                     const alias = await mockApi.getOrCreateAlias(user.id);
                     if (alias) {
                         const baseUrl = window.location.origin;
@@ -67,7 +67,7 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
             .replace("image/png", "image/octet-stream");
           let downloadLink = document.createElement("a");
           downloadLink.href = pngUrl;
-          downloadLink.download = `agentverse-share-${user?.shareId}.png`;
+          downloadLink.download = `agentverse-share.png`;
           document.body.appendChild(downloadLink);
           downloadLink.click();
           document.body.removeChild(downloadLink);
@@ -81,7 +81,7 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
                 <DialogHeader>
                     <DialogTitle>分享您的聊天链接</DialogTitle>
                     <DialogDescription>
-                        与访客分享此唯一链接或二维码，即可开始与您的专属聊天会话。链接在密钥过期后将失效。
+                        与访客分享此唯一链接或二维码，即可开始与您的专属聊天会话。链接有独立有效期，过期将自动失效。
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col items-center gap-6 pt-4">

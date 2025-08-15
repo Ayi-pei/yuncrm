@@ -32,7 +32,7 @@ function getAlignedExpireAt(now = new Date()): Date {
     expire.setDate(expire.getDate() + 1);
     expire.setHours(12, 0, 0, 0);
   } else {
-    // 领取时间 < 12:00 -> 当天 0:00 过期（实际是当天的 24:00）
+    // 领取时间 < 12:00 -> 当天 24:00 过期（实际是当天的 24:00）
     expire.setDate(expire.getDate());
     expire.setHours(24, 0, 0, 0);
   }
@@ -41,8 +41,10 @@ function getAlignedExpireAt(now = new Date()): Date {
 }
 
 // --- ALIAS/TOKEN UTILS ---
+const aliasMap = new Map<string, Alias>(); // token -> Alias
+
 const generateToken = (length = 5) => {
-    const alphabet = 'abcdefghjkmnpqrstuvwxyz23456789';
+    const alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
     let out = '';
     for (let i = 0; i < length; i++) {
         out += alphabet[Math.floor(Math.random() * alphabet.length)];
@@ -50,12 +52,19 @@ const generateToken = (length = 5) => {
     return out;
 };
 
+function resolveAlias(token: string): string | null {
+  const item = aliasMap.get(token);
+  if (!item) return null;
+  if (new Date() > new Date(item.expireAt)) {
+    aliasMap.delete(token); // Expired, so we delete it.
+    return null;
+  }
+  // The shareId is the agentId in this implementation
+  return item.shareId; 
+}
+
 
 // --- IN-MEMORY DATABASE ---
-
-// token -> sessionId. This is the core of the new logic.
-const aliasToSessionMap = new Map<string, string>();
-
 
 let accessKeys: AccessKey[] = [
   {
@@ -115,7 +124,6 @@ let agents: Agent[] = [
     name: "小爱",
     avatar: "https://i.pravatar.cc/150?u=alice",
     status: "online",
-    shareId: 'al1ce',
     accessKeyId: "key-agent-01",
     lastActiveAt: new Date().toISOString(),
     role: "agent",
@@ -125,7 +133,6 @@ let agents: Agent[] = [
     name: "小博",
     avatar: "https://i.pravatar.cc/150?u=bob",
     status: "busy",
-    shareId: 'b0b45',
     accessKeyId: "key-agent-02",
     lastActiveAt: new Date().toISOString(),
     role: "agent",
@@ -135,7 +142,6 @@ let agents: Agent[] = [
     name: "小驰",
     avatar: "https://i.pravatar.cc/150?u=charlie",
     status: "offline",
-    shareId: 'ch4rl',
     accessKeyId: "key-agent-03",
     lastActiveAt: new Date(Date.now() - 86400000).toISOString(),
     role: "agent",
@@ -266,7 +272,8 @@ export const mockApi = {
     if (agent) {
        agent.status = 'online';
        agent.lastActiveAt = new Date().toISOString();
-       return { id: agent.id, role: 'agent', name: agent.name, avatar: agent.avatar, shareId: agent.shareId, status: agent.status, lastActiveAt: agent.lastActiveAt };
+       // Return agent ID as shareId
+       return { id: agent.id, role: 'agent', name: agent.name, avatar: agent.avatar, shareId: agent.id, status: agent.status, lastActiveAt: agent.lastActiveAt };
     }
 
     return null;
@@ -318,7 +325,6 @@ export const mockApi = {
             name: newKey.name,
             avatar: `https://i.pravatar.cc/150?u=${agentId}`,
             status: "offline",
-            shareId: generateToken(5),
             accessKeyId: newKey.id,
             role: 'agent',
             lastActiveAt: new Date().toISOString(),
@@ -498,80 +504,79 @@ export const mockApi = {
 
     const agent = agents.find(a => a.id === agentId);
     if (!agent) return null;
-    
-    // Create a new session for this link
-    const customerId = generateId('cust');
-    const newCustomer: Customer = {
-        id: customerId,
-        name: generateChineseName(),
-        avatar: `https://i.pravatar.cc/150?u=${customerId}`,
-        ipAddress: "192.168.1.100",
-        device: "Chrome on Windows",
-        location: "美国，旧金山",
-        firstSeen: new Date().toISOString()
-    };
-    customers.push(newCustomer);
 
-    const welcomeMessages = agentSettings[agent.id]?.welcomeMessages || ["您好！有什么可以帮您的吗？"];
-    const initialMessages: ChatMessage[] = welcomeMessages.filter(m => m.trim() !== '').map((msg, index) => ({
-      id: generateId(`msg-welcome-${index}`),
-      type: 'text',
-      text: msg,
-      sender: 'agent',
-      agentId: agent.id,
-      timestamp: new Date(Date.now() + index).toISOString(),
-    }));
+    // The "shareId" for the alias is now the agent's ID
+    const shareId = agent.id;
+    const expireAt = getAlignedExpireAt();
     
-    const newSession: ChatSession = {
-        id: generateId('session'),
-        customerId: newCustomer.id,
-        agentId: agent.id,
-        status: "pending",
-        createdAt: new Date().toISOString(),
-        messages: initialMessages
-    };
-    chatSessions.push(newSession);
-
     // Generate a unique token for this session
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 5; i++) { // Try up to 5 times
         const token = generateToken(5);
-        if (!aliasToSessionMap.has(token)) {
+        if (!aliasMap.has(token)) {
             const alias: Alias = {
                 token,
-                sessionId: newSession.id,
-                createdAt: new Date().toISOString(),
+                shareId: shareId,
+                expireAt: expireAt.toISOString(),
             };
-            aliasToSessionMap.set(token, newSession.id);
+            aliasMap.set(token, alias);
             return alias;
         }
     }
-    return null; 
+    return null; // Failed to generate a unique token
   },
 
   async getChatDataForVisitorByToken(token: string) {
       await delay(500);
-      const sessionId = aliasToSessionMap.get(token);
-      if(!sessionId) return null;
-
-      const session = chatSessions.find(s => s.id === sessionId);
-      if(!session) return null;
       
-      const agent = agents.find(a => a.id === session.agentId);
-      if(!agent) return null;
+      const agentId = resolveAlias(token);
+      if(!agentId) return null; // Link is invalid or expired
+      
+      const agent = agents.find(a => a.id === agentId);
+      if(!agent) return null; // Agent no longer exists
       
       // CRITICAL: Check if the agent's key is still valid
       const key = accessKeys.find(k => k.id === agent.accessKeyId);
       if (!key || key.status !== 'active' || (key.expiresAt && new Date(key.expiresAt) < new Date())) {
           return null; // Key is invalid, so the link is dead
       }
+
+       // Create a new session for this link
+      const customerId = generateId('cust');
+      const newCustomer: Customer = {
+          id: customerId,
+          name: generateChineseName(),
+          avatar: `https://i.pravatar.cc/150?u=${customerId}`,
+          ipAddress: "192.168.1.100",
+          device: "Chrome on Windows",
+          location: "美国，旧金山",
+          firstSeen: new Date().toISOString()
+      };
+      customers.push(newCustomer);
+  
+      const welcomeMessages = agentSettings[agent.id]?.welcomeMessages || ["您好！有什么可以帮您的吗？"];
+      const initialMessages: ChatMessage[] = welcomeMessages.filter(m => m.trim() !== '').map((msg, index) => ({
+        id: generateId(`msg-welcome-${index}`),
+        type: 'text',
+        text: msg,
+        sender: 'agent',
+        agentId: agent.id,
+        timestamp: new Date(Date.now() + index).toISOString(),
+      }));
       
-      const customer = customers.find(c => c.id === session.customerId);
-      if(!customer) return null;
+      const newSession: ChatSession = {
+          id: generateId('session'),
+          customerId: newCustomer.id,
+          agentId: agent.id,
+          status: "pending",
+          createdAt: new Date().toISOString(),
+          messages: initialMessages
+      };
+      chatSessions.push(newSession);
 
       return {
           agent: { name: agent.name, avatar: agent.avatar, status: agent.status },
-          session: session,
-          customer: customer,
+          session: newSession,
+          customer: newCustomer,
       };
   },
   

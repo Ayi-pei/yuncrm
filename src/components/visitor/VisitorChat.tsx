@@ -42,15 +42,15 @@ export function VisitorChat({ aliasToken }: VisitorChatProps) {
                 return;
             }
             try {
-                // The API now returns an existing session or null if the agent/key is invalid
+                // The API now creates a session if the token is valid, or returns null.
                 const chatData = await mockApi.getChatDataForVisitorByToken(aliasToken);
                 if (!chatData) {
-                    setError("此聊天链接无效或坐席不再可用。");
+                    setError("此聊天链接无效或已过期。");
                 } else {
                     setData(chatData);
                 }
             } catch (e) {
-                setError("无法启动聊天会话。");
+                setError("无法启动聊天会话。请稍后重试。");
             } finally {
                 setIsLoading(false);
             }

@@ -12,7 +12,7 @@ export interface User {
     status: UserStatus;
     accessKey?: string;
     lastActiveAt: string; 
-    shareId?: string; 
+    shareId?: string; // The agent's own ID, used for creating aliases.
 }
 
 export type AccessKeyType = 'agent' | 'admin';
@@ -102,7 +102,7 @@ export interface Agent extends User {
 }
 
 export type Alias = {
-  token: string;     // The short, 5-character token
-  sessionId: string; // The session this token points to
-  createdAt: string; // ISO
+  token: string;     // The short, 5-character token, e.g. s52wb
+  shareId: string;   // The real ID this token points to (agent.id)
+  expireAt: string;  // ISO string for when the token expires
 };
