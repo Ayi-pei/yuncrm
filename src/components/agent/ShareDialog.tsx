@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -20,8 +21,10 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
     const [shareUrl, setShareUrl] = useState("");
 
     useEffect(() => {
-        if (isOpen && user?.shareId && typeof window !== "undefined") {
-            const url = `${window.location.origin}/chat/${user.shareId}`;
+        if (isOpen && user?.shareId) {
+            // Use a production-friendly base URL instead of window.location.origin
+            const baseUrl = "https://agentverse.app"; 
+            const url = `${baseUrl}/chat/${user.shareId}`;
             setShareUrl(url);
         }
     }, [user, isOpen]);
