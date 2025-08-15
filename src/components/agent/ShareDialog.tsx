@@ -24,7 +24,7 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
         if (isOpen && user?.shareId) {
             // Use a production-friendly base URL instead of window.location.origin
             const baseUrl = "https://agentverse.app"; 
-            const url = `${baseUrl}/noiod/${user.shareId}`;
+            const url = `${baseUrl}/naoiod/${user.shareId}`;
             setShareUrl(url);
         }
     }, [user, isOpen]);
