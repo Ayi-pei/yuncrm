@@ -14,7 +14,7 @@ export default function LoginPage() {
                 {APP_NAME}
             </h1>
             <p className="mt-2 text-muted-foreground">
-                云聚智能，CRM致胜。AI驱动的多智能体客户服务平台。
+                云聚精研，匠心CRM。智能驱动，重塑客户体验。
             </p>
         </div>
         <LoginForm />
