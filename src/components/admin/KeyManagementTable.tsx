@@ -74,13 +74,13 @@ export function KeyManagementTable() {
 
   return (
     <>
-      <PageHeader title="密钥管理" description="为您的智能体和管理员创建、编辑和管理访问密钥。">
+      <div className="flex justify-end">
         <Button onClick={() => handleOpenModal()}>
           <PlusCircle className="mr-2 h-4 w-4" />
           创建密钥
         </Button>
-      </PageHeader>
-      <div className="border rounded-lg">
+      </div>
+      <div className="border rounded-lg mt-4">
         <Table>
           <TableHeader>
             <TableRow>
@@ -285,5 +285,3 @@ function KeyFormDialog({ isOpen, setIsOpen, editingKey, createKey, updateKey, to
         </Dialog>
     )
 }
-
-    
