@@ -15,7 +15,7 @@ import {
   UserRole,
 } from "./types";
 import { ADMIN_KEY } from "./constants";
-import { add, differenceInMilliseconds } from 'date-fns';
+import { add, differenceInMilliseconds, differenceInHours } from 'date-fns';
 
 
 const getFutureDate = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
@@ -330,8 +330,8 @@ export const mockApi = {
             lastActiveAt: new Date().toISOString(),
         }
         agents.push(newAgent);
-        // Bind the new key to this new agent
-        newKey.userId = agentId;
+        // DO NOT BIND upon creation. Let extendKey handle it.
+        // newKey.userId = agentId; 
         agentSettings[newAgent.id] = { welcomeMessages: ["欢迎!"], quickReplies: [], blockedIps: [] };
     }
 
@@ -462,11 +462,13 @@ export const mockApi = {
             throw new Error("该密钥已过期。");
         }
         
+        // Unbind the old key
         const oldKeyIndex = accessKeys.findIndex(k => k.userId === agentId);
         if (oldKeyIndex !== -1) {
-            accessKeys.splice(oldKeyIndex, 1);
+            accessKeys[oldKeyIndex].userId = undefined;
         }
 
+        // Bind the new key
         newKey.userId = agentId;
 
         // Invalidate aliases associated with this agent

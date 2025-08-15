@@ -37,6 +37,7 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
             if (user?.id) {
                 setIsLoading(true);
                 try {
+                    // This function now intelligently gets an existing valid alias or creates a new one.
                     const aliasData = await mockApi.getOrCreateAlias(user.id);
                     if (aliasData) {
                         setAlias(aliasData);
@@ -54,13 +55,13 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
             }
         };
         
+        // Trigger on open, or if the alias has been invalidated (e.g. by extending a key)
         if(isOpen) {
+            if(shouldInvalidateAliases) {
+                setShareUrl(""); // Clear the url to show loading and force a refetch
+                aliasesInvalidated(); // Reset the flag in the store
+            }
              generateUrl();
-        }
-
-        if(isOpen && shouldInvalidateAliases) {
-            setShareUrl(""); // Clear the url to force refetch
-            aliasesInvalidated(); // Reset the flag in the store
         }
 
     }, [user, isOpen, toast, shouldInvalidateAliases, aliasesInvalidated]);

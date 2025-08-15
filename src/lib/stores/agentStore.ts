@@ -128,7 +128,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     try {
         const updatedKey = await mockApi.extendAgentKey(agentId, newKeyString);
         if (updatedKey) {
-            set({ key: updatedKey, isExtendingKey: false });
+            set({ key: updatedKey, isExtendingKey: false, shouldInvalidateAliases: true });
             return true;
         }
         return false;

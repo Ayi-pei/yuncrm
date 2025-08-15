@@ -174,7 +174,7 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>智能体设置</DialogTitle>
+                    <DialogTitle>坐席设置</DialogTitle>
                     <DialogDescription>管理您的个人资料和聊天设置。</DialogDescription>
                 </DialogHeader>
                 <Tabs defaultValue="profile">
