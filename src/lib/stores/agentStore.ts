@@ -21,6 +21,9 @@ interface AgentState {
   updateSettings: (agentId: string, settings: AgentSettings) => Promise<void>;
   pollSessionUpdates: (sessionId: string) => Promise<void>;
   extendKey: (agentId: string, newKeyString: string) => Promise<boolean>;
+  blockCustomer: (ipAddress: string) => void;
+  unblockCustomer: (ipAddress: string) => void;
+  deleteCustomer: (customerId: string) => void;
 }
 
 // Helper to fetch and update a single session
@@ -65,7 +68,15 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     }
   },
   setActiveSessionId: (sessionId) => {
-    set({ activeSessionId: sessionId });
+    const customerId = get().sessions.find(s => s.id === sessionId)?.customerId;
+    if (customerId) {
+        const isBlocked = get().settings?.blockedIps.includes(get().customers.find(c => c.id === customerId)?.ipAddress || "");
+        if (isBlocked) {
+             set({ activeSessionId: sessionId, error: "This customer is blocked." });
+             return;
+        }
+    }
+    set({ activeSessionId: sessionId, error: null });
   },
   sendMessage: async (sessionId, text) => {
     const message: ChatMessage = {
@@ -116,4 +127,47 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         return false;
     }
   },
+  blockCustomer: (ipAddress) => {
+    set(state => {
+      if (!state.settings || state.settings.blockedIps.includes(ipAddress)) return {};
+      const newSettings = {
+        ...state.settings,
+        blockedIps: [...state.settings.blockedIps, ipAddress],
+      };
+      mockApi.updateAgentSettings(state.agent!.id, newSettings);
+      return { settings: newSettings };
+    });
+  },
+  unblockCustomer: (ipAddress) => {
+    set(state => {
+      if (!state.settings) return {};
+      const newSettings = {
+        ...state.settings,
+        blockedIps: state.settings.blockedIps.filter(ip => ip !== ipAddress),
+      };
+      mockApi.updateAgentSettings(state.agent!.id, newSettings);
+      return { settings: newSettings };
+    });
+  },
+  deleteCustomer: (customerId) => {
+    set(state => {
+        const sessionsToRemove = state.sessions.filter(s => s.customerId === customerId).map(s => s.id);
+        
+        const newSessions = state.sessions.filter(s => s.customerId !== customerId);
+        const newCustomers = state.customers.filter(c => c.id !== customerId);
+        
+        let newActiveSessionId = state.activeSessionId;
+        if(sessionsToRemove.includes(state.activeSessionId || '')) {
+            newActiveSessionId = newSessions[0]?.id || null;
+        }
+
+        mockApi.deleteCustomer(customerId);
+
+        return {
+            sessions: newSessions,
+            customers: newCustomers,
+            activeSessionId: newActiveSessionId
+        }
+    });
+  }
 }));

@@ -40,7 +40,8 @@ export interface Customer {
   ipAddress?: string;
   device?: string; 
   location?: string;
-  firstSeen: string; 
+  firstSeen: string;
+  isBlocked?: boolean;
 }
 
 export type ChatSessionStatus = 'pending' | 'active' | 'closed';

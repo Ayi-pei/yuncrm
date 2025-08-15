@@ -420,6 +420,14 @@ export const mockApi = {
 
       return currentKey;
   },
+  
+  async deleteCustomer(customerId: string): Promise<boolean> {
+      await delay(300);
+      const initialCustomerCount = customers.length;
+      customers = customers.filter(c => c.id !== customerId);
+      chatSessions = chatSessions.filter(s => s.customerId !== customerId);
+      return customers.length < initialCustomerCount;
+  },
 
 
   // --- Visitor Functions ---
