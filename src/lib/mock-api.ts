@@ -194,6 +194,15 @@ let agentSettings: Record<string, AgentSettings> = {
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
+const generateChineseName = () => {
+    const nameChars = "梦琪忆柳之桃慕青初夏沛菡傲珊曼文乐菱惜文香菡新柔语蓉海安夜蓉涵柏水桃醉蓝语琴从彤傲晴语兰又菱碧彤元霜怜梦紫寒妙彤曼易南蓮紫翠雨寒易烟如萱若南寻真晓亦向珊慕靈水凡".split('');
+    let name = '';
+    for (let i = 0; i < 4; i++) {
+        name += nameChars[Math.floor(Math.random() * nameChars.length)];
+    }
+    return name;
+};
+
 
 // --- API FUNCTIONS ---
 
@@ -450,7 +459,7 @@ export const mockApi = {
       const customerId = generateId('cust');
       const newCustomer: Customer = {
           id: customerId,
-          name: `访客 ${Math.floor(Math.random() * 1000)}`,
+          name: generateChineseName(),
           avatar: `https://i.pravatar.cc/150?u=${customerId}`,
           ipAddress: "192.168.1.100",
           device: "Chrome on Windows",
