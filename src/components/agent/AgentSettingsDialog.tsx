@@ -11,7 +11,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { AgentSettings, QuickReply } from "@/lib/types";
 import { PlusCircle, Trash, KeyRound, Bell, Loader2, Edit, Save, ArrowUp, GripVertical } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
@@ -36,6 +36,7 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
     const [showReminder, setShowReminder] = useState(true);
     const [newKey, setNewKey] = useState("");
     const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
 
 
     useEffect(() => {
@@ -86,6 +87,24 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
         updateCurrentUser({ avatar: newAvatar });
         toast({ title: "头像已更新", description: "已生成新的随机头像。" });
     }
+    
+    const handleAvatarUploadClick = () => {
+        avatarInputRef.current?.click();
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                const newAvatar = reader.result as string;
+                await updateProfile(agent!.id, { avatar: newAvatar });
+                updateCurrentUser({ avatar: newAvatar });
+                toast({ title: "头像已更新", description: "您的头像已成功上传。" });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
     
     const handleSettingsSave = async () => {
         const filteredWelcomeMessages = welcomeMessages.filter(m => m.trim() !== "");
@@ -171,10 +190,22 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
                             </div>
                             <Button onClick={handleProfileSave}>保存名称</Button>
                         </div>
-                         <div className="space-y-2 py-4">
-                            <Label>头像</Label>
-                            <p className="text-sm text-muted-foreground">生成一个新的随机头像。</p>
-                            <Button variant="outline" onClick={handleGenerateAvatar}>生成新头像</Button>
+                         <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                                <Label>头像</Label>
+                                <p className="text-sm text-muted-foreground">上传您自己的头像或生成一个随机头像。</p>
+                                 <div className="flex items-center gap-2">
+                                    <Button onClick={handleAvatarUploadClick}>上传头像</Button>
+                                    <Button variant="outline" onClick={handleGenerateAvatar}>生成随机头像</Button>
+                                </div>
+                                <input 
+                                    type="file" 
+                                    ref={avatarInputRef} 
+                                    onChange={handleFileChange} 
+                                    className="hidden" 
+                                    accept="image/*"
+                                />
+                            </div>
                         </div>
                     </TabsContent>
                     <TabsContent value="chat" className="p-1">
@@ -286,4 +317,3 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
         </Dialog>
     );
 }
-
