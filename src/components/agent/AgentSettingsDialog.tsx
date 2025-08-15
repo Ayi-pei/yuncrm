@@ -13,7 +13,7 @@ import { Textarea } from "../ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import type { AgentSettings, QuickReply } from "@/lib/types";
-import { PlusCircle, Trash, KeyRound, Bell, Loader2, Edit, Save, ArrowUp } from "lucide-react";
+import { PlusCircle, Trash, KeyRound, Bell, Loader2, Edit, Save, ArrowUp, GripVertical } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { zhCN } from 'date-fns/locale';
 import { Switch } from "../ui/switch";
@@ -198,23 +198,25 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
                                     <Label>快捷回复</Label>
                                     <p className="text-sm text-muted-foreground">输入您的常用语录，方便快速回复。</p>
                                 </div>
-                                <div className="space-y-2 relative pb-6">
+                                <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                                     {quickReplies.map((qr, index) => (
                                          <div key={qr.id} className="flex items-center gap-2 p-2 rounded-md border bg-background">
-                                            {index > 0 && (
-                                                <Button variant="ghost" size="icon" onClick={() => handleMoveUp(index)} className="h-8 w-8">
-                                                    <ArrowUp className="h-4 w-4" />
-                                                </Button>
-                                            )}
+                                            
                                             {editingReplyId === qr.id ? (
                                                 <>
+                                                     <Button disabled variant="ghost" size="icon" className="h-8 w-8 cursor-default">
+                                                        <ArrowUp className="h-4 w-4" />
+                                                    </Button>
                                                     <Input placeholder="快捷指令" value={qr.shortcut} onChange={e => updateQuickReply(qr.id, 'shortcut', e.target.value)} className="w-28"/>
                                                     <Input placeholder="快捷回复内容" className="flex-1" value={qr.message} onChange={e => updateQuickReply(qr.id, 'message', e.target.value)} />
                                                     <Button variant="ghost" size="icon" onClick={() => setEditingReplyId(null)}><Save className="h-4 w-4 text-primary"/></Button>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <code className="px-2 py-1 bg-muted rounded-md text-sm font-semibold w-28 text-center truncate ml-auto">{qr.shortcut}</code>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleMoveUp(index)} className="h-8 w-8" disabled={index === 0}>
+                                                        <ArrowUp className="h-4 w-4" />
+                                                    </Button>
+                                                    <code className="px-2 py-1 bg-muted rounded-md text-sm font-semibold w-28 text-center truncate">{qr.shortcut}</code>
                                                     <p className="flex-1 text-sm text-muted-foreground truncate">{qr.message}</p>
                                                     <Button variant="ghost" size="icon" onClick={() => setEditingReplyId(qr.id)}><Edit className="h-4 w-4"/></Button>
                                                     <Button variant="ghost" size="icon" onClick={() => removeQuickReply(qr.id)}><Trash className="h-4 w-4 text-destructive"/></Button>
@@ -284,3 +286,4 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
         </Dialog>
     );
 }
+
