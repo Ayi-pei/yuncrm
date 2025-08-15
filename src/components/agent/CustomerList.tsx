@@ -72,31 +72,33 @@ export function CustomerList() {
                                             </p>
                                         </div>
                                     </button>
-                                     <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon" 
-                                                className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>您确定要删除该客户吗？</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    此操作无法撤销。这将会永久删除该客户及其所有对话历史。
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>取消</AlertDialogCancel>
-                                                <AlertDialogAction onClick={(e) => handleDelete(e, customer.id)} className="bg-destructive hover:bg-destructive/90">
-                                                    删除
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
+                                    <div className="absolute top-1/2 right-2 -translate-y-1/2 opacity-0 group-hover:opacity-100">
+                                         <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    className="h-7 w-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>您确定要删除该客户吗？</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        此操作无法撤销。这将会永久删除该客户及其所有对话历史。
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>取消</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={(e) => handleDelete(e, customer.id)} className="bg-destructive hover:bg-destructive/90">
+                                                        删除
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
                                 </div>
                             )
                         })}
