@@ -14,7 +14,7 @@ import { ScrollArea } from "../ui/scroll-area";
 import { redactPii } from "@/ai/flows/redact-pii";
 
 interface VisitorChatProps {
-    shareId: string;
+    aliasToken: string;
 }
 
 type ChatData = {
@@ -23,7 +23,7 @@ type ChatData = {
     customer: Customer;
 };
 
-export function VisitorChat({ shareId }: VisitorChatProps) {
+export function VisitorChat({ aliasToken }: VisitorChatProps) {
     const [data, setData] = useState<ChatData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -34,8 +34,14 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
 
     useEffect(() => {
         const initChat = async () => {
+            if (!aliasToken) {
+                setError("无效的聊天链接。");
+                setIsLoading(false);
+                return;
+            }
             try {
-                const chatData = await mockApi.getChatDataForVisitor(shareId);
+                // Use the new API method to get data via the alias token
+                const chatData = await mockApi.getChatDataForVisitorByToken(aliasToken);
                 if (!chatData) {
                     setError("此聊天链接无效或坐席不再可用。");
                 } else {
@@ -48,7 +54,7 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
             }
         };
         initChat();
-    }, [shareId]);
+    }, [aliasToken]);
 
     useEffect(() => {
         if (data?.session.id) {

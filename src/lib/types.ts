@@ -99,3 +99,9 @@ export interface AgentSettings {
 export interface Agent extends User {
     accessKeyId: string;
 }
+
+export type Alias = {
+  token: string;     // The short, 5-character token
+  shareId: string;   // The real, original shareId
+  createdAt: string; // ISO
+};

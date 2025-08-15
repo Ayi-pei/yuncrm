@@ -5,6 +5,7 @@ import {
   Agent,
   AgentSettings,
   AgentStatus,
+  Alias,
   ChatMessage,
   ChatSession,
   Customer,
@@ -17,10 +18,26 @@ import { add, differenceInMilliseconds } from 'date-fns';
 
 
 const getFutureDate = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-const generateRandomId = (length: number) => Math.random().toString(36).slice(2, 2 + length);
+
+// --- ALIAS/TOKEN UTILS ---
+const generateToken = (length = 5) => {
+    // Chars that are easy to read and type.
+    const alphabet = 'abcdefghjkmnpqrstuvwxyz23456789';
+    let out = '';
+    for (let i = 0; i < length; i++) {
+        out += alphabet[Math.floor(Math.random() * alphabet.length)];
+    }
+    return out;
+};
 
 
 // --- IN-MEMORY DATABASE ---
+
+// shareId -> Alias
+const aliasMap = new Map<string, Alias>();
+// token -> shareId
+const tokenMap = new Map<string, string>();
+
 
 let accessKeys: AccessKey[] = [
   {
@@ -80,7 +97,7 @@ let agents: Agent[] = [
     name: "小爱",
     avatar: "https://i.pravatar.cc/150?u=alice",
     status: "online",
-    shareId: generateRandomId(5),
+    shareId: 'agent-share-alice',
     accessKeyId: "key-agent-01",
     lastActiveAt: new Date().toISOString(),
     role: "agent",
@@ -90,7 +107,7 @@ let agents: Agent[] = [
     name: "小博",
     avatar: "https://i.pravatar.cc/150?u=bob",
     status: "busy",
-    shareId: generateRandomId(5),
+    shareId: 'agent-share-bob',
     accessKeyId: "key-agent-02",
     lastActiveAt: new Date().toISOString(),
     role: "agent",
@@ -100,7 +117,7 @@ let agents: Agent[] = [
     name: "小驰",
     avatar: "https://i.pravatar.cc/150?u=charlie",
     status: "offline",
-    shareId: generateRandomId(5),
+    shareId: 'agent-share-charlie',
     accessKeyId: "key-agent-03",
     lastActiveAt: new Date(Date.now() - 86400000).toISOString(),
     role: "agent",
@@ -275,7 +292,7 @@ export const mockApi = {
             name: newKey.name,
             avatar: `https://i.pravatar.cc/150?u=${agentId}`,
             status: "offline",
-            shareId: generateRandomId(5),
+            shareId: generateId('share'),
             accessKeyId: newKey.id,
             role: 'agent',
             lastActiveAt: new Date().toISOString(),
@@ -450,10 +467,35 @@ export const mockApi = {
       return customers.length < initialCustomerCount;
   },
 
+  // --- Visitor & Alias Functions ---
 
-  // --- Visitor Functions ---
-  async getChatDataForVisitor(shareId: string) {
+  async getOrCreateAlias(shareId: string): Promise<Alias | null> {
+    await delay(100);
+    if (aliasMap.has(shareId)) {
+        return aliasMap.get(shareId)!;
+    }
+    // Try to generate a unique token
+    for (let i = 0; i < 5; i++) {
+        const token = generateToken(5);
+        if (!tokenMap.has(token)) {
+            const alias: Alias = {
+                token,
+                shareId,
+                createdAt: new Date().toISOString(),
+            };
+            aliasMap.set(shareId, alias);
+            tokenMap.set(token, shareId);
+            return alias;
+        }
+    }
+    return null; // Failed to generate a unique token
+  },
+
+  async getChatDataForVisitorByToken(token: string) {
       await delay(500);
+      const shareId = tokenMap.get(token);
+      if(!shareId) return null;
+
       const agent = agents.find(a => a.shareId === shareId && a.status !== 'offline');
       if(!agent) return null;
 
@@ -501,5 +543,3 @@ export const mockApi = {
       return session || null;
   }
 };
-
-    

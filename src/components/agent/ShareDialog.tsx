@@ -5,10 +5,11 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Copy, Download } from "lucide-react";
+import { Copy, Download, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useToast } from "@/hooks/use-toast";
 import QRCode from "qrcode.react";
+import { mockApi } from "@/lib/mock-api";
 
 interface ShareDialogProps {
     isOpen: boolean;
@@ -19,15 +20,28 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
     const { user } = useAuthStore();
     const { toast } = useToast();
     const [shareUrl, setShareUrl] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        if (isOpen && user?.shareId) {
-            // Use a production-friendly base URL instead of window.location.origin
-            const baseUrl = "https://agentverse.app"; 
-            const url = `${baseUrl}/naoiod/${user.shareId}`;
-            setShareUrl(url);
-        }
-    }, [user, isOpen]);
+        const generateUrl = async () => {
+            if (isOpen && user?.shareId) {
+                setIsLoading(true);
+                try {
+                    const alias = await mockApi.getOrCreateAlias(user.shareId);
+                    if (alias) {
+                        const baseUrl = "https://agentverse.app"; 
+                        const url = `${baseUrl}/naoiod/${alias.token}`;
+                        setShareUrl(url);
+                    }
+                } catch (e) {
+                    toast({ title: "错误", description: "无法生成分享链接。", variant: "destructive" });
+                } finally {
+                    setIsLoading(false);
+                }
+            }
+        };
+        generateUrl();
+    }, [user, isOpen, toast]);
     
     const handleCopy = () => {
         if (!shareUrl) return;
@@ -62,10 +76,12 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
                 </DialogHeader>
                 <div className="flex flex-col items-center gap-6 pt-4">
                     <div className="p-4 bg-white rounded-lg border">
-                        {shareUrl ? (
-                            <QRCode id="qr-code-canvas" value={shareUrl} size={192} level={"H"} includeMargin={true} />
+                        {isLoading || !shareUrl ? (
+                            <div className="h-[208px] w-[208px] bg-gray-200 animate-pulse rounded-md flex items-center justify-center">
+                                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                            </div>
                         ) : (
-                            <div className="h-[208px] w-[208px] bg-gray-200 animate-pulse rounded-md" />
+                            <QRCode id="qr-code-canvas" value={shareUrl} size={192} level={"H"} includeMargin={true} />
                         )}
                     </div>
                     <div className="w-full flex items-center gap-2">
@@ -85,6 +101,3 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
         </Dialog>
     );
 }
-
-
-    
