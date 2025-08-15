@@ -45,7 +45,7 @@ export default function AdminDashboardPage() {
           <Card className="hover:border-primary/50 hover:shadow-lg transition-all">
             <CardHeader className="flex flex-row items-start justify-between">
               <div>
-                <CardTitle className="text-xl">智能体管理</CardTitle>
+                <CardTitle className="text-xl">坐席管理</CardTitle>
                 <CardDescription className="mt-1">查看和管理所有客服坐席</CardDescription>
               </div>
                <Users className="h-8 w-8 text-muted-foreground" />
