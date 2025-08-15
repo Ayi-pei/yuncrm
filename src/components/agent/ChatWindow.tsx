@@ -183,7 +183,7 @@ export function ChatWindow({ session }: ChatWindowProps) {
                             <Textarea 
                                 placeholder="输入您的消息..." 
                                 className="pr-32"
-                                rows={3}
+                                rows={4}
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 onKeyDown={(e) => {
