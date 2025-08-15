@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ChatSession, ChatMessage, FileChatMessage } from "@/lib/types";
+import type { ChatSession, ChatMessage, FileChatMessage, TextChatMessage } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -28,7 +28,7 @@ const EMOJIS = [
 ];
 
 export function ChatWindow({ session }: ChatWindowProps) {
-    const { agent, customers, sendMessage, settings, addMessageToSession } = useAgentStore();
+    const { agent, customers, sendMessage, settings, sendFileMessage } = useAgentStore();
     const customer = customers.find(c => c.id === session.customerId);
     const [message, setMessage] = useState("");
     const [isRedacting, setIsRedacting] = useState(false);
@@ -51,7 +51,13 @@ export function ChatWindow({ session }: ChatWindowProps) {
 
     const handleSend = async () => {
         if (!message.trim() || isCustomerBlocked) return;
-        await sendMessage(session.id, { type: 'text', text: message });
+        
+        const textMessage: Omit<TextChatMessage, 'id' | 'timestamp' | 'sender' | 'agentId'> = {
+            type: 'text',
+            text: message,
+        };
+
+        await sendMessage(session.id, textMessage);
         setMessage("");
     };
     
@@ -84,60 +90,7 @@ export function ChatWindow({ session }: ChatWindowProps) {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file && agent) {
-            const tempId = `file-${Date.now()}`;
-            const fileMessage: FileChatMessage = {
-                id: tempId,
-                type: 'file',
-                sender: 'agent',
-                agentId: agent.id,
-                timestamp: new Date().toISOString(),
-                file: {
-                    name: file.name,
-                    size: file.size,
-                    progress: 0
-                }
-            };
-            
-            addMessageToSession(session.id, fileMessage);
-
-            // Simulate upload
-            const interval = setInterval(() => {
-                useAgentStore.setState(state => {
-                    const targetSession = state.sessions.find(s => s.id === session.id);
-                    if (!targetSession) {
-                        clearInterval(interval);
-                        return state;
-                    }
-                    
-                    const messageToUpdate = targetSession.messages.find(m => m.id === tempId) as FileChatMessage | undefined;
-                    if (!messageToUpdate) {
-                         clearInterval(interval);
-                        return state;
-                    }
-
-                    const currentProgress = messageToUpdate.file.progress;
-                    const nextProgress = Math.min(currentProgress + Math.random() * 25, 100);
-                    
-                    const updatedMessage = {
-                        ...messageToUpdate,
-                        file: { ...messageToUpdate.file, progress: nextProgress }
-                    };
-
-                    if (nextProgress >= 100) {
-                        clearInterval(interval);
-                    }
-                    
-                    return {
-                        ...state,
-                        sessions: state.sessions.map(s => 
-                            s.id === session.id ? {
-                                ...s,
-                                messages: s.messages.map(m => m.id === tempId ? updatedMessage : m)
-                            } : s
-                        )
-                    }
-                });
-            }, 500);
+            sendFileMessage(session.id, file);
         }
         e.target.value = "";
     }

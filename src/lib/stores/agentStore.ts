@@ -1,7 +1,7 @@
 
 import { create } from "zustand";
 import { mockApi } from "@/lib/mock-api";
-import type { AccessKey, Agent, AgentSettings, AgentStatus, ChatMessage, ChatSession, Customer, TextChatMessage } from "@/lib/types";
+import type { AccessKey, Agent, AgentSettings, AgentStatus, ChatMessage, ChatSession, Customer, FileChatMessage, TextChatMessage } from "@/lib/types";
 
 interface AgentState {
   agent: Agent | null;
@@ -16,7 +16,7 @@ interface AgentState {
 
   fetchAgentData: (agentId: string) => Promise<void>;
   setActiveSessionId: (sessionId: string | null) => void;
-  sendMessage: (sessionId: string, message: Omit<TextChatMessage, 'id' | 'timestamp' | 'sender' | 'agentId'>) => Promise<void>;
+  sendMessage: (sessionId: string, message: Omit<TextChatMessage | FileChatMessage, 'id' | 'timestamp' | 'sender' | 'agentId'>) => Promise<void>;
   updateStatus: (agentId: string, status: AgentStatus) => Promise<void>;
   updateProfile: (agentId: string, updates: { name?: string; avatar?: string }) => Promise<void>;
   updateSettings: (agentId: string, settings: AgentSettings) => Promise<void>;
@@ -27,7 +27,7 @@ interface AgentState {
   deleteCustomer: (customerId: string) => void;
   archiveSession: (sessionId: string) => Promise<void>;
   unarchiveSession: (sessionId: string) => Promise<void>;
-  addMessageToSession: (sessionId: string, message: ChatMessage) => void;
+  sendFileMessage: (sessionId: string, file: File) => Promise<void>;
 }
 
 // Helper to fetch and update a single session
@@ -195,12 +195,70 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       }));
     }
   },
-  addMessageToSession: (sessionId, message) => {
+  sendFileMessage: async (sessionId, file) => {
+    const agentId = get().agent?.id;
+    if (!agentId) return;
+
+    // 1. Create a temporary message and send to API to get a real ID
+    const tempFileMessage: Omit<FileChatMessage, 'id'> = {
+        type: 'file',
+        sender: 'agent',
+        agentId: agentId,
+        timestamp: new Date().toISOString(),
+        file: {
+            name: file.name,
+            size: file.size,
+            progress: 0,
+        }
+    };
+    
+    // This will add the message to the mock API's session and return it with an ID
+    const persistedMessage = await mockApi.sendMessage(sessionId, tempFileMessage as FileChatMessage) as FileChatMessage;
+    
+    // 2. Add the message with its new ID to the local state
     set(state => ({
-        sessions: state.sessions.map(s => s.id === sessionId ? {
-            ...s,
-            messages: [...s.messages, message]
-        } : s)
+        sessions: state.sessions.map(s => 
+            s.id === sessionId ? { ...s, messages: [...s.messages, persistedMessage] } : s
+        )
     }));
-  }
+
+    // 3. Simulate upload progress on the now-persisted message
+    const interval = setInterval(() => {
+        set(state => {
+            const currentSession = state.sessions.find(s => s.id === sessionId);
+            if (!currentSession) {
+                clearInterval(interval);
+                return state;
+            }
+            
+            const messageToUpdate = currentSession.messages.find(m => m.id === persistedMessage.id) as FileChatMessage | undefined;
+            if (!messageToUpdate) {
+                clearInterval(interval);
+                return state;
+            }
+
+            const currentProgress = messageToUpdate.file.progress;
+            const nextProgress = Math.min(currentProgress + Math.random() * 25, 100);
+            
+            const updatedMessage = {
+                ...messageToUpdate,
+                file: { ...messageToUpdate.file, progress: nextProgress }
+            };
+
+            if (nextProgress >= 100) {
+                clearInterval(interval);
+            }
+            
+            return {
+                ...state,
+                sessions: state.sessions.map(s => 
+                    s.id === sessionId ? {
+                        ...s,
+                        messages: s.messages.map(m => m.id === persistedMessage.id ? updatedMessage : m)
+                    } : s
+                )
+            };
+        });
+    }, 500);
+  },
 }));
