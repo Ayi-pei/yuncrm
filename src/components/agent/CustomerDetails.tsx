@@ -4,7 +4,7 @@
 import type { Customer } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Globe, HardDrive, MapPin, Calendar, Ban, Trash2, CheckCircle } from "lucide-react";
+import { Globe, HardDrive, MapPin, Calendar, Ban, CheckCircle, Archive } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
@@ -12,7 +12,6 @@ import { QuickReplies } from "./QuickReplies";
 import { ScrollArea } from "../ui/scroll-area";
 import { Button } from "../ui/button";
 import { useAgentStore } from "@/lib/stores/agentStore";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +21,7 @@ interface CustomerDetailsProps {
 }
 
 export function CustomerDetails({ customer }: CustomerDetailsProps) {
-    const { blockCustomer, unblockCustomer, deleteCustomer, settings } = useAgentStore();
+    const { blockCustomer, unblockCustomer, settings } = useAgentStore();
     const { toast } = useToast();
     
     const isBlocked = settings?.blockedIps.includes(customer.ipAddress || "") || false;
@@ -47,11 +46,6 @@ export function CustomerDetails({ customer }: CustomerDetailsProps) {
             toast({ title: "客户已被拉黑", description: "您将不会再收到该IP地址的消息。" });
         }
     };
-
-    const handleDelete = () => {
-        deleteCustomer(customer.id);
-        toast({ title: "客户已删除", description: "该客户及其对话已被移除。", variant: "destructive"});
-    }
     
     return (
         <aside className="w-80 border-l bg-muted/20 p-6 flex flex-col gap-6">
@@ -116,27 +110,10 @@ export function CustomerDetails({ customer }: CustomerDetailsProps) {
                     {isBlocked ? '解除' : '拉黑'}
                 </Button>
                 
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="icon">
-                            <Trash2 />
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>您确定要删除该客户吗？</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                此操作无法撤销。这将会永久删除该客户及其所有对话历史。
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>取消</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                删除
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+                <Button variant="outline" className="flex-1" disabled>
+                    <Archive className="mr-2" />
+                    归档
+                </Button>
             </div>
         </aside>
     );

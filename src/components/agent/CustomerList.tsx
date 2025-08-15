@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAgentStore } from "@/lib/stores/agentStore";
@@ -5,13 +6,23 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from 'date-fns/locale';
-import { Bot, User as UserIcon, Archive } from "lucide-react";
+import { Bot, User as UserIcon, Archive, Trash2 } from "lucide-react";
 import { AgentProfile } from "./AgentProfile";
 import { ScrollArea } from "../ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
+import { Button } from "../ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export function CustomerList() {
-    const { sessions, customers, activeSessionId, setActiveSessionId } = useAgentStore();
+    const { sessions, customers, activeSessionId, setActiveSessionId, deleteCustomer } = useAgentStore();
+    const { toast } = useToast();
+
+    const handleDelete = (e: React.MouseEvent, customerId: string) => {
+        e.stopPropagation(); // Prevent session selection
+        deleteCustomer(customerId);
+        toast({ title: "客户已删除", description: "该客户及其对话已被移除。", variant: "destructive"});
+    }
     
     return (
         <aside className="w-80 border-r bg-muted/20 flex flex-col h-full">
@@ -37,31 +48,58 @@ export function CustomerList() {
                             if(!customer) return null;
 
                             return (
-                                <button 
-                                    key={session.id} 
-                                    onClick={() => setActiveSessionId(session.id)}
-                                    className={cn(
-                                        "w-full text-left p-3 rounded-lg flex gap-3 items-start transition-colors",
-                                        activeSessionId === session.id ? "bg-primary/10" : "hover:bg-muted/50"
-                                    )}
-                                >
-                                    <Avatar className="h-12 w-12 border">
-                                        <AvatarImage src={customer.avatar} />
-                                        <AvatarFallback><UserIcon /></AvatarFallback>
-                                        {session.status === 'pending' && <div className="absolute bottom-0 right-0 h-3 w-3 bg-accent rounded-full border-2 border-background" />}
-                                    </Avatar>
-                                    <div className="flex-1 overflow-hidden">
-                                        <div className="flex justify-between items-baseline">
-                                            <p className="font-semibold truncate">{customer.name}</p>
-                                            <p className="text-xs text-muted-foreground shrink-0">
-                                                {formatDistanceToNow(new Date(lastMessage.timestamp), { addSuffix: true, locale: zhCN })}
+                                <div key={session.id} className="relative group">
+                                    <button 
+                                        onClick={() => setActiveSessionId(session.id)}
+                                        className={cn(
+                                            "w-full text-left p-3 rounded-lg flex gap-3 items-start transition-colors",
+                                            activeSessionId === session.id ? "bg-primary/10" : "hover:bg-muted/50"
+                                        )}
+                                    >
+                                        <Avatar className="h-12 w-12 border">
+                                            <AvatarImage src={customer.avatar} />
+                                            <AvatarFallback><UserIcon /></AvatarFallback>
+                                            {session.status === 'pending' && <div className="absolute bottom-0 right-0 h-3 w-3 bg-accent rounded-full border-2 border-background" />}
+                                        </Avatar>
+                                        <div className="flex-1 overflow-hidden">
+                                            <div className="flex justify-between items-baseline">
+                                                <p className="font-semibold truncate">{customer.name}</p>
+                                                <p className="text-xs text-muted-foreground shrink-0">
+                                                    {formatDistanceToNow(new Date(lastMessage.timestamp), { addSuffix: true, locale: zhCN })}
+                                                </p>
+                                            </div>
+                                            <p className="text-sm text-muted-foreground truncate">
+                                                {lastMessage.text}
                                             </p>
                                         </div>
-                                        <p className="text-sm text-muted-foreground truncate">
-                                            {lastMessage.text}
-                                        </p>
-                                    </div>
-                                </button>
+                                    </button>
+                                     <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+                                                onClick={(e) => e.stopPropagation()} // Stop propagation to not select the item
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>您确定要删除该客户吗？</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    此操作无法撤销。这将会永久删除该客户及其所有对话历史。
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>取消</AlertDialogCancel>
+                                                <AlertDialogAction onClick={(e) => handleDelete(e, customer.id)} className="bg-destructive hover:bg-destructive/90">
+                                                    删除
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
                             )
                         })}
                         </div>
