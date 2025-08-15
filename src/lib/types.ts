@@ -1,16 +1,5 @@
 
 
-// Simplified User for UI purposes, will be replaced by the main User type
-export interface AppUser {
-  id: string;
-  role: 'admin' | 'agent';
-  name: string;
-  avatar?: string;
-  shareId?: string;
-  status?: AgentStatus;
-}
-
-
 export type UserRole = 'admin' | 'agent';
 
 export type UserStatus = 'online' | 'busy' | 'offline' | 'away';
@@ -85,4 +74,9 @@ export interface AgentSettings {
     welcomeMessage: string; 
     quickReplies: QuickReply[];
     blockedIps: string[];
+}
+
+
+export interface Agent extends User {
+    accessKeyId: string;
 }

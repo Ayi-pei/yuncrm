@@ -24,52 +24,51 @@ let accessKeys: AccessKey[] = [
   {
     id: "key-admin-01",
     key: ADMIN_KEY,
-    role: "admin",
     name: "默认管理员",
     status: "active",
     createdAt: new Date().toISOString(),
-    lastUsedAt: null,
     expiresAt: null, // Admins don't expire
+    key_type: "admin",
   },
   {
     id: "key-agent-01",
     key: "AGENT-ALICE-123",
-    role: "agent",
     name: "小爱",
     status: "active",
     createdAt: new Date().toISOString(),
-    lastUsedAt: null,
     expiresAt: getFutureDate(30),
+    key_type: "agent",
+    lastUsedAt: new Date().toISOString(),
   },
   {
     id: "key-agent-02",
     key: "AGENT-BOB-456",
-    role: "agent",
     name: "小博",
     status: "active",
     createdAt: new Date().toISOString(),
-    lastUsedAt: null,
     expiresAt: getFutureDate(7),
+    key_type: "agent",
+    lastUsedAt: new Date().toISOString(),
   },
   {
     id: "key-agent-03",
     key: "AGENT-CHARLIE-789",
-    role: "agent",
     name: "小驰",
     status: "suspended",
     createdAt: new Date().toISOString(),
-    lastUsedAt: null,
     expiresAt: new Date().toISOString(),
+    key_type: "agent",
+    lastUsedAt: new Date().toISOString(),
   },
   {
     id: 'key-agent-04',
     key: 'AGENT-UNUSED-001',
-    role: 'agent',
     name: '备用密钥1',
     status: 'active',
     createdAt: new Date().toISOString(),
-    lastUsedAt: null,
     expiresAt: getFutureDate(15),
+    key_type: "agent",
+    lastUsedAt: null,
   },
 ];
 
@@ -80,9 +79,9 @@ let agents: Agent[] = [
     avatar: "https://i.pravatar.cc/150?u=alice",
     status: "online",
     shareId: "chat-with-alice",
-    sessionLoad: 1,
-    maxLoad: 5,
     accessKeyId: "key-agent-01",
+    lastActiveAt: new Date().toISOString(),
+    role: "agent",
   },
   {
     id: "agent-02",
@@ -90,9 +89,9 @@ let agents: Agent[] = [
     avatar: "https://i.pravatar.cc/150?u=bob",
     status: "busy",
     shareId: "talk-to-bob",
-    sessionLoad: 5,
-    maxLoad: 5,
     accessKeyId: "key-agent-02",
+    lastActiveAt: new Date().toISOString(),
+    role: "agent",
   },
   {
     id: "agent-03",
@@ -100,9 +99,9 @@ let agents: Agent[] = [
     avatar: "https://i.pravatar.cc/150?u=charlie",
     status: "offline",
     shareId: "help-from-charlie",
-    sessionLoad: 0,
-    maxLoad: 5,
     accessKeyId: "key-agent-03",
+    lastActiveAt: new Date(Date.now() - 86400000).toISOString(),
+    role: "agent",
   },
 ];
 
@@ -210,13 +209,15 @@ export const mockApi = {
 
     accessKey.lastUsedAt = new Date().toISOString();
 
-    if (accessKey.role === 'admin') {
-      return { id: 'admin-user', role: 'admin', name: '管理员' };
+    if (accessKey.key_type === 'admin') {
+      return { id: 'admin-user', role: 'admin', name: '管理员', status: 'online', lastActiveAt: new Date().toISOString() };
     }
 
     const agent = agents.find((a) => a.accessKeyId === accessKey.id);
     if (agent) {
-      return { id: agent.id, role: 'agent', name: agent.name, avatar: agent.avatar, shareId: agent.shareId, status: agent.status };
+       agent.status = 'online';
+       agent.lastActiveAt = new Date().toISOString();
+       return { id: agent.id, role: 'agent', name: agent.name, avatar: agent.avatar, shareId: agent.shareId, status: agent.status, lastActiveAt: agent.lastActiveAt };
     }
 
     return null;
@@ -234,24 +235,26 @@ export const mockApi = {
 
   async getAccessKeys(): Promise<AccessKey[]> {
     await delay(300);
-    return [...accessKeys];
+    // Add usageCount for demonstration
+    return [...accessKeys].map(k => ({...k, usageCount: k.lastUsedAt ? 1 : 0, maxUsage: 1 })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
 
-  async createAccessKey(data: { name: string; role: UserRole }): Promise<AccessKey> {
+  async createAccessKey(data: { name: string; key_type: UserRole, notes?: string }): Promise<AccessKey> {
     await delay(500);
     const newKey: AccessKey = {
       id: generateId('key'),
-      key: `${data.role.toUpperCase()}-${data.name.toUpperCase().replace(/\s/g, "")}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-      role: data.role,
+      key: `${data.key_type.toUpperCase()}-${data.name.toUpperCase().replace(/\s/g, "")}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      key_type: data.key_type,
       name: data.name,
+      notes: data.notes,
       status: "active",
       createdAt: new Date().toISOString(),
       lastUsedAt: null,
-      expiresAt: data.role === 'agent' ? getFutureDate(30) : null,
+      expiresAt: data.key_type === 'agent' ? getFutureDate(30) : null,
     };
     accessKeys.push(newKey);
 
-    if (newKey.role === 'agent') {
+    if (newKey.key_type === 'agent') {
         const agentId = generateId('agent');
         const newAgent: Agent = {
             id: agentId,
@@ -259,9 +262,9 @@ export const mockApi = {
             avatar: `https://i.pravatar.cc/150?u=${agentId}`,
             status: "offline",
             shareId: `chat-with-${newKey.name.toLowerCase().replace(/\s/g, "-")}-${generateId('')}`,
-            sessionLoad: 0,
-            maxLoad: 5,
             accessKeyId: newKey.id,
+            role: 'agent',
+            lastActiveAt: new Date().toISOString(),
         }
         agents.push(newAgent);
         agentSettings[newAgent.id] = { welcomeMessage: "欢迎!", quickReplies: [], blockedIps: [] };
@@ -301,9 +304,17 @@ export const mockApi = {
     return accessKeys.length < initialLength;
   },
 
-  async getAgents(): Promise<Agent[]> {
+  async getAgents(): Promise<User[]> {
     await delay(300);
-    return [...agents];
+    return [...agents].map(a => ({
+        id: a.id,
+        name: a.name,
+        avatar: a.avatar,
+        role: a.role,
+        status: a.status,
+        lastActiveAt: a.lastActiveAt,
+        accessKey: accessKeys.find(k => k.id === a.accessKeyId)?.key
+    })).sort((a,b) => new Date(b.lastActiveAt).getTime() - new Date(a.lastActiveAt).getTime());
   },
 
   // --- Agent Functions ---
@@ -381,8 +392,11 @@ export const mockApi = {
       if (!newKey) {
           throw new Error("提供的新密钥无效。");
       }
-      if (newKey.status !== 'active' || newKey.role !== 'agent' || newKey.lastUsedAt !== null) {
+      if (newKey.key_type !== 'agent' || newKey.lastUsedAt !== null) {
           throw new Error("该密钥不可用（可能已被使用、暂停或角色不符）。");
+      }
+      if (newKey.status !== 'active') {
+          newKey.status = 'active'; // Activate it for extension
       }
       if (!newKey.expiresAt) {
           throw new Error("该密钥没有设置到期时间。");
@@ -397,10 +411,10 @@ export const mockApi = {
       const timeToAdd = differenceInMilliseconds(newKeyExpiresAt, now);
       
       const currentKeyExpiresAt = currentKey.expiresAt ? new Date(currentKey.expiresAt) : now;
-      const newExpiryDate = add(currentKeyExpiresAt, { milliseconds: timeToAdd });
+      const newExpiryDate = add(currentKeyExpiresAt < now ? now : currentKeyExpiresAt, { milliseconds: timeToAdd });
       
       currentKey.expiresAt = newExpiryDate.toISOString();
-      newKey.status = 'suspended';
+      newKey.status = 'used';
       newKey.lastUsedAt = now.toISOString();
 
       return currentKey;
