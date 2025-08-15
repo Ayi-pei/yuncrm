@@ -1,5 +1,36 @@
-# Firebase Studio
+# 云聚-CRM：多智能体客户服务平台
 
-This is a NextJS starter in Firebase Studio.
+本项目是一个使用 Next.js, Genkit, 和 TypeScript 构建的现代化、功能丰富的多智能体客户服务（CRM）平台。它提供了一整套从管理员、坐席到访客的完整解决方案，并集成了先进的AI能力。
 
-To get started, take a look at src/app/page.tsx.
+## ✨ 核心功能
+
+- **管理员仪表盘**:
+  - **密钥管理**: 创建、查看、编辑和管理用于登录系统的访问密钥（坐席或管理员类型）。
+  - **坐席管理**: 统一查看系统内所有坐席的状态、活动和绑定的密钥。
+  - **数据统计**: 概览平台核心指标，如坐席总数、在线人数、密钥状态等。
+
+- **坐席工作台**:
+  - **实时聊天**: 与来自不同渠道的访客进行实时、一对一的沟通。
+  - **会话管理**: 清晰的会话列表，可以切换、归档和恢复聊天。
+  - **客户信息面板**: 在聊天时可以随时查看访客的详细信息（如IP、地理位置、设备等）。
+  - **快捷回复**: 设置并使用常用语，一键发送，提升响应效率。
+  - **智能辅助**: 内置基于 Genkit 的 PII（个人身份信息）一键脱敏功能，确保对话安全。
+
+- **访客聊天界面**:
+  - 通过唯一的分享链接或二维码，访客可以轻松地与指定坐席建立聊天会话。
+
+- **动态密钥与分享链接系统**:
+  - **固定到期点**: 密钥具有固定的每日到期时间点（例如 12:00 或 00:00），增强安全性。
+  - **替换式绑定**: 坐席通过绑定一个有效的、未使用的密钥来获取或延长访问权限，旧密钥立即失效。
+  - **同步失效的分享链接**: 坐席可以生成与当前密钥有效期同步的分享链接和二维码。当坐席更换密钥后，旧的分享链接将自动作废，需要重新生成。
+
+## 🛠️ 技术栈
+
+- **前端框架**: [Next.js](https://nextjs.org/) (使用 App Router)
+- **编程语言**: [TypeScript](https://www.typescriptlang.org/)
+- **UI 组件库**: [ShadCN/UI](https://ui.shadcn.com/)
+- **样式方案**: [Tailwind CSS](https://tailwindcss.com/)
+- **AI 集成**: [Genkit (by Firebase)](https://firebase.google.com/docs/genkit)
+- **状态管理**: [Zustand](https://github.com/pmndrs/zustand)
+- **图标库**: [Lucide React](https://lucide.dev/)
+- **日期处理**: [date-fns](https://date-fns.org/)
