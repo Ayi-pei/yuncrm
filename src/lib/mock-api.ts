@@ -20,6 +20,26 @@ import { add, differenceInMilliseconds } from 'date-fns';
 
 const getFutureDate = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
+function getAlignedExpireAt(now = new Date()): Date {
+  const expire = new Date(now);
+
+  // 当天中午时间
+  const noon = new Date(now);
+  noon.setHours(12, 0, 0, 0);
+
+  if (now.getTime() >= noon.getTime()) {
+    // 领取时间 >= 12:00 -> 次日 12:00 过期
+    expire.setDate(expire.getDate() + 1);
+    expire.setHours(12, 0, 0, 0);
+  } else {
+    // 领取时间 < 12:00 -> 当天 0:00 过期（实际是当天的 24:00）
+    expire.setDate(expire.getDate());
+    expire.setHours(24, 0, 0, 0);
+  }
+
+  return expire;
+}
+
 // --- ALIAS/TOKEN UTILS ---
 const generateToken = (length = 5) => {
     const alphabet = 'abcdefghjkmnpqrstuvwxyz23456789';
@@ -272,6 +292,14 @@ export const mockApi = {
 
   async createAccessKey(data: { name: string; key_type: UserRole, notes?: string }): Promise<AccessKey> {
     await delay(500);
+    
+    let expiresAt: string | null;
+    if (data.key_type === 'admin') {
+      expiresAt = getAlignedExpireAt().toISOString();
+    } else {
+      expiresAt = getFutureDate(30);
+    }
+
     const newKey: AccessKey = {
       id: generateId('key'),
       key: `${data.key_type.toUpperCase()}-${data.name.toUpperCase().replace(/\s/g, "")}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
@@ -281,7 +309,7 @@ export const mockApi = {
       status: "active",
       createdAt: new Date().toISOString(),
       lastUsedAt: null,
-      expiresAt: data.key_type === 'agent' ? getFutureDate(30) : null,
+      expiresAt: expiresAt,
     };
     accessKeys.push(newKey);
 
