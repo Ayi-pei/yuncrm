@@ -480,6 +480,13 @@ export const mockApi = {
       newKey.status = 'used';
       newKey.lastUsedAt = now.toISOString();
 
+      // Invalidate aliases associated with this agent
+      for (const [token, alias] of aliasMap.entries()) {
+        if(alias.shareId === agentId) {
+          aliasMap.delete(token);
+        }
+      }
+
       return currentKey;
   },
   

@@ -24,7 +24,7 @@ const APP_ICON_SVG_DATA_URL = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDo
 
 export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
     const { user } = useAuthStore();
-    const { agent } = useAgentStore();
+    const { agent, shouldInvalidateAliases, aliasesInvalidated } = useAgentStore();
     const { toast } = useToast();
     const [alias, setAlias] = useState<Alias | null>(null);
     const [shareUrl, setShareUrl] = useState("");
@@ -55,9 +55,16 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
         };
         
         if(isOpen) {
-            generateUrl();
+             generateUrl();
         }
-    }, [user, isOpen, toast]);
+
+        if(isOpen && shouldInvalidateAliases) {
+            setShareUrl(""); // Clear the url to force refetch
+            aliasesInvalidated(); // Reset the flag in the store
+        }
+
+    }, [user, isOpen, toast, shouldInvalidateAliases, aliasesInvalidated]);
+
 
     useEffect(() => {
         if (qrStyle === 'none') {

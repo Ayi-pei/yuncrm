@@ -26,7 +26,7 @@ interface AgentSettingsDialogProps {
 }
 
 export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogProps) {
-    const { agent, settings, key, updateProfile, updateSettings, extendKey, isExtendingKey, error } = useAgentStore();
+    const { agent, settings, key, updateProfile, updateSettings, extendKey, isExtendingKey, error, invalidateAliases } = useAgentStore();
     const { updateCurrentUser } = useAuthStore();
     const { toast } = useToast();
     
@@ -146,8 +146,9 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
         if(success) {
             toast({
                 title: "密钥已延续",
-                description: "坐席位有效期已成功延长。",
+                description: "坐席位有效期已成功延长。旧的分享链接已失效，请重新生成。",
             });
+            invalidateAliases(); // This will trigger the ShareDialog to refetch a new URL
             setNewKey("");
         } else {
              toast({

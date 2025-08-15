@@ -13,6 +13,8 @@ interface AgentState {
   isExtendingKey: boolean;
   error: string | null;
   key: AccessKey | null;
+  shouldInvalidateAliases: boolean;
+
 
   fetchAgentData: (agentId: string) => Promise<void>;
   setActiveSessionId: (sessionId: string | null) => void;
@@ -28,6 +30,8 @@ interface AgentState {
   archiveSession: (sessionId: string) => Promise<void>;
   unarchiveSession: (sessionId: string) => Promise<void>;
   sendFileMessage: (sessionId: string, file: File) => Promise<void>;
+  invalidateAliases: () => void;
+  aliasesInvalidated: () => void;
 }
 
 // Helper to fetch and update a single session
@@ -51,6 +55,8 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   isExtendingKey: false,
   error: null,
   key: null,
+  shouldInvalidateAliases: false,
+
 
   fetchAgentData: async (agentId) => {
     set({ isLoading: true });
@@ -261,4 +267,6 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         });
     }, 500);
   },
+  invalidateAliases: () => set({ shouldInvalidateAliases: true }),
+  aliasesInvalidated: () => set({ shouldInvalidateAliases: false }),
 }));
