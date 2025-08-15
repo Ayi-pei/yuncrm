@@ -37,8 +37,8 @@ export function CustomerList() {
                     </div>
                 </div>
                 
-                <TabsContent value="conversations" className="flex-1 flex flex-col min-h-0 relative">
-                    <div className="absolute inset-0 overflow-y-auto">
+                <TabsContent value="conversations" className="flex-1 min-h-0">
+                    <div className="h-full overflow-y-auto">
                         <div className="p-2 space-y-1">
                         {sessions.map(session => {
                             const customer = customers.find(c => c.id === session.customerId);
@@ -110,7 +110,7 @@ export function CustomerList() {
                     </div>
                 </TabsContent>
 
-                <TabsContent value="archived" className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
+                <TabsContent value="archived" className="flex-grow flex flex-col items-center justify-center text-muted-foreground">
                     <Archive className="h-12 w-12" />
                     <p className="mt-4 text-sm">没有已归档的会话。</p>
                 </TabsContent>
