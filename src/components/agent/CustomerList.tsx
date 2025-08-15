@@ -50,7 +50,7 @@ export function CustomerList() {
                                     <button 
                                         onClick={() => setActiveSessionId(session.id)}
                                         className={cn(
-                                            "w-full text-left p-3 rounded-lg flex gap-3 items-start transition-colors",
+                                            "w-full text-left p-3 rounded-lg flex gap-3 items-center transition-colors",
                                             activeSessionId === session.id ? "bg-primary/10" : "hover:bg-muted/50"
                                         )}
                                     >
@@ -71,7 +71,7 @@ export function CustomerList() {
                                             </p>
                                         </div>
                                     </button>
-                                    <div className="absolute top-1/2 right-2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="absolute top-0 right-2 h-full flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                                          <AlertDialog>
                                             <AlertDialogTrigger asChild>
                                                 <Button 
