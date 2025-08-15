@@ -9,7 +9,7 @@ import {
   SidebarFooter,
   SidebarTrigger
 } from "@/components/ui/sidebar";
-import { Bot, KeyRound, Users, BarChart3, LogOut, Settings } from "lucide-react";
+import { Headset, KeyRound, Users, BarChart3, LogOut, Settings } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { APP_NAME } from "@/lib/constants";
@@ -32,7 +32,7 @@ export function AdminSidebar() {
         <SidebarHeader className="items-center justify-between">
             <Link href="/admin" className="flex items-center gap-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <Bot size={24} />
+                    <Headset size={24} />
                 </div>
                 <span className="font-semibold group-data-[collapsible=icon]:hidden">{APP_NAME}</span>
             </Link>

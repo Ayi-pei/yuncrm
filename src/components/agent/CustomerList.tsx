@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from 'date-fns/locale';
-import { Bot, User as UserIcon, Archive, Trash2, ArchiveRestore } from "lucide-react";
+import { Headset, User as UserIcon, Archive, Trash2, ArchiveRestore } from "lucide-react";
 import { AgentProfile } from "./AgentProfile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
@@ -70,7 +70,7 @@ export function CustomerList() {
                                 </p>
                             </div>
                             <p className="text-sm text-muted-foreground truncate">
-                                {lastMessage.text}
+                                {lastMessage.type === 'text' ? lastMessage.text : `[${lastMessage.file.name}]`}
                             </p>
                         </div>
                     </button>
@@ -128,7 +128,7 @@ export function CustomerList() {
                  <div className="p-3 border-b flex-shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
-                            <Bot size={24} />
+                            <Headset size={24} />
                         </div>
                         <TabsList className="grid w-full grid-cols-2 h-10">
                             <TabsTrigger value="conversations">会话</TabsTrigger>

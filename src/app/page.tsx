@@ -1,5 +1,5 @@
 import { LoginForm } from "@/components/auth/LoginForm";
-import { Bot } from "lucide-react";
+import { Headset } from "lucide-react";
 import { APP_NAME } from "@/lib/constants";
 
 export default function LoginPage() {
@@ -8,7 +8,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-                <Bot size={36} />
+                <Headset size={36} />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground font-headline">
                 {APP_NAME}
