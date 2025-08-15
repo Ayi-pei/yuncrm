@@ -324,7 +324,7 @@ export const mockApi = {
     const agent = agents.find(a => a.id === agentId);
     if(!agent) return null;
     
-    const sessions = chatSessions.filter(s => s.agentId === agentId && s.status !== 'closed');
+    const sessions = chatSessions.filter(s => s.agentId === agentId);
     const customerIds = sessions.map(s => s.customerId);
     const relevantCustomers = customers.filter(c => customerIds.includes(c.id));
     const settings = agentSettings[agentId];
@@ -373,6 +373,16 @@ export const mockApi = {
     if(agentSettings[agentId]) {
         agentSettings[agentId] = settings;
         return { ...settings };
+    }
+    return null;
+  },
+  
+  async updateSessionStatus(sessionId: string, status: ChatSession['status']): Promise<ChatSession | null> {
+    await delay(200);
+    const session = chatSessions.find(s => s.id === sessionId);
+    if (session) {
+      session.status = status;
+      return { ...session };
     }
     return null;
   },

@@ -44,7 +44,7 @@ export interface Customer {
   isBlocked?: boolean;
 }
 
-export type ChatSessionStatus = 'pending' | 'active' | 'closed';
+export type ChatSessionStatus = 'pending' | 'active' | 'archived';
 
 export interface ChatSession {
   id: string; 

@@ -1,3 +1,4 @@
+
 import { create } from "zustand";
 import { mockApi } from "@/lib/mock-api";
 import type { AccessKey, Agent, AgentSettings, AgentStatus, ChatMessage, ChatSession, Customer } from "@/lib/types";
@@ -24,6 +25,8 @@ interface AgentState {
   blockCustomer: (ipAddress: string) => void;
   unblockCustomer: (ipAddress: string) => void;
   deleteCustomer: (customerId: string) => void;
+  archiveSession: (sessionId: string) => Promise<void>;
+  unarchiveSession: (sessionId: string) => Promise<void>;
 }
 
 // Helper to fetch and update a single session
@@ -60,7 +63,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
           settings: data.settings,
           key: data.key,
           isLoading: false,
-          activeSessionId: data.sessions.find(s => s.status === 'active')?.id || data.sessions[0]?.id || null,
+          activeSessionId: data.sessions.find(s => s.status === 'active')?.id || data.sessions.find(s => s.status === 'pending')?.id || null,
         });
       }
     } catch (e) {
@@ -169,5 +172,26 @@ export const useAgentStore = create<AgentState>((set, get) => ({
             activeSessionId: newActiveSessionId
         }
     });
+  },
+  archiveSession: async (sessionId) => {
+    const updatedSession = await mockApi.updateSessionStatus(sessionId, 'archived');
+    if (updatedSession) {
+      set(state => {
+        const otherSessions = state.sessions.filter(s => s.status !== 'archived' && s.id !== sessionId);
+        return {
+          sessions: state.sessions.map(s => s.id === sessionId ? updatedSession : s),
+          activeSessionId: otherSessions[0]?.id || null,
+        }
+      });
+    }
+  },
+  unarchiveSession: async (sessionId) => {
+    const updatedSession = await mockApi.updateSessionStatus(sessionId, 'active');
+    if(updatedSession) {
+      set(state => ({
+        sessions: state.sessions.map(s => s.id === sessionId ? updatedSession : s),
+        activeSessionId: sessionId,
+      }));
+    }
   }
 }));

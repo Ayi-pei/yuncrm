@@ -4,7 +4,7 @@
 import type { Customer } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Globe, HardDrive, MapPin, Calendar, Ban, CheckCircle, Archive } from "lucide-react";
+import { Globe, HardDrive, MapPin, Calendar, Ban, CheckCircle, Archive, ArchiveRestore } from "lucide-react";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
@@ -21,10 +21,12 @@ interface CustomerDetailsProps {
 }
 
 export function CustomerDetails({ customer }: CustomerDetailsProps) {
-    const { blockCustomer, unblockCustomer, settings } = useAgentStore();
+    const { blockCustomer, unblockCustomer, settings, archiveSession, activeSessionId } = useAgentStore();
     const { toast } = useToast();
     
     const isBlocked = settings?.blockedIps.includes(customer.ipAddress || "") || false;
+    const activeSession = useAgentStore(state => state.sessions.find(s => s.id === state.activeSessionId));
+    const isArchived = activeSession?.status === 'archived';
 
     const details = [
         { icon: Globe, label: "IP 地址", value: customer.ipAddress },
@@ -47,8 +49,21 @@ export function CustomerDetails({ customer }: CustomerDetailsProps) {
         }
     };
     
+    const handleArchive = () => {
+        if (!activeSessionId) return;
+        archiveSession(activeSessionId);
+        toast({ title: "会话已归档" });
+    }
+    
     return (
-        <aside className="w-80 border-l bg-muted/20 p-6 flex flex-col gap-6">
+        <aside className="w-80 border-l bg-muted/20 p-6 flex flex-col gap-6 relative">
+            {isArchived && (
+                 <div className="absolute inset-0 bg-background/80 z-10 flex flex-col items-center justify-center text-center p-4">
+                    <Archive className="h-10 w-10 text-muted-foreground mb-4" />
+                    <p className="font-semibold text-lg">会话已归档</p>
+                    <p className="text-sm text-muted-foreground">您可以从归档列表中恢复此会话。</p>
+                </div>
+            )}
             <div className="text-center flex flex-col items-center flex-shrink-0">
                 <Avatar className="h-24 w-24 border-2 border-primary mb-4">
                     <AvatarImage src={customer.avatar} />
@@ -110,7 +125,7 @@ export function CustomerDetails({ customer }: CustomerDetailsProps) {
                     {isBlocked ? '解除' : '拉黑'}
                 </Button>
                 
-                <Button variant="outline" className="flex-1" disabled>
+                <Button variant="outline" className="flex-1" onClick={handleArchive}>
                     <Archive className="mr-2" />
                     归档
                 </Button>
@@ -118,3 +133,4 @@ export function CustomerDetails({ customer }: CustomerDetailsProps) {
         </aside>
     );
 }
+
