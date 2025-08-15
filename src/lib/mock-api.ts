@@ -46,6 +46,7 @@ function getAlignedExpireAt(now = new Date()): Date {
     expire.setHours(12, 0, 0, 0);
   } else {
     // 领取时间 < 12:00 -> 当天 24:00 过期（实际是当天的 24:00）
+    expire.setDate(expire.getDate());
     expire.setHours(24, 0, 0, 0);
   }
 
@@ -458,7 +459,7 @@ export const mockApi = {
           throw new Error("该密钥不可用（可能已被使用、暂停或角色不符）。");
       }
       if (newKey.status !== 'active') {
-          newKey.status = 'active'; // Activate it for extension
+           throw new Error("该密钥非激活状态");
       }
       if (!newKey.expiresAt) {
           throw new Error("该密钥没有设置到期时间。");
