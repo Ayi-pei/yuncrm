@@ -1,7 +1,7 @@
 
 import { create } from "zustand";
 import { mockApi } from "@/lib/mock-api";
-import type { AccessKey, Agent, AgentSettings, AgentStatus, ChatMessage, ChatSession, Customer } from "@/lib/types";
+import type { AccessKey, Agent, AgentSettings, AgentStatus, ChatMessage, ChatSession, Customer, TextChatMessage } from "@/lib/types";
 
 interface AgentState {
   agent: Agent | null;
@@ -16,7 +16,7 @@ interface AgentState {
 
   fetchAgentData: (agentId: string) => Promise<void>;
   setActiveSessionId: (sessionId: string | null) => void;
-  sendMessage: (sessionId: string, text: string) => Promise<void>;
+  sendMessage: (sessionId: string, message: Omit<TextChatMessage, 'id' | 'timestamp' | 'sender' | 'agentId'>) => Promise<void>;
   updateStatus: (agentId: string, status: AgentStatus) => Promise<void>;
   updateProfile: (agentId: string, updates: { name?: string; avatar?: string }) => Promise<void>;
   updateSettings: (agentId: string, settings: AgentSettings) => Promise<void>;
@@ -27,6 +27,7 @@ interface AgentState {
   deleteCustomer: (customerId: string) => void;
   archiveSession: (sessionId: string) => Promise<void>;
   unarchiveSession: (sessionId: string) => Promise<void>;
+  addMessageToSession: (sessionId: string, message: ChatMessage) => void;
 }
 
 // Helper to fetch and update a single session
@@ -81,10 +82,10 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     }
     set({ activeSessionId: sessionId, error: null });
   },
-  sendMessage: async (sessionId, text) => {
+  sendMessage: async (sessionId, messageData) => {
     const message: ChatMessage = {
         id: '', // will be set by mock api
-        text,
+        ...messageData,
         sender: 'agent',
         timestamp: new Date().toISOString(),
         agentId: get().agent?.id,
@@ -193,5 +194,13 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         activeSessionId: sessionId,
       }));
     }
+  },
+  addMessageToSession: (sessionId, message) => {
+    set(state => ({
+        sessions: state.sessions.map(s => s.id === sessionId ? {
+            ...s,
+            messages: [...s.messages, message]
+        } : s)
+    }));
   }
 }));

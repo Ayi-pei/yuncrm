@@ -56,14 +56,32 @@ export interface ChatSession {
 }
 
 export type MessageSenderType = 'customer' | 'agent' | 'system';
+export type MessageType = 'text' | 'file';
 
-export interface ChatMessage {
+interface BaseChatMessage {
   id: string; 
-  text: string;
   sender: MessageSenderType;
   timestamp: string; 
   agentId?: string;
 }
+
+export interface TextChatMessage extends BaseChatMessage {
+  type: 'text';
+  text: string;
+}
+
+export interface FileChatMessage extends BaseChatMessage {
+  type: 'file';
+  file: {
+    name: string;
+    size: number;
+    progress: number; // 0-100
+  };
+  text?: string; // Optional text with file
+}
+
+export type ChatMessage = TextChatMessage | FileChatMessage;
+
 
 export interface QuickReply {
   id: string; 

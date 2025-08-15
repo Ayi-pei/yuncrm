@@ -2,11 +2,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ChatSession } from "@/lib/types";
+import type { ChatSession, ChatMessage, FileChatMessage } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-import { Send, Sparkles, Loader2, User as UserIcon, Smile, Mic, Paperclip, Image as ImageIcon, Ban, Dot } from "lucide-react";
+import { Send, Sparkles, Loader2, User as UserIcon, Smile, Mic, Paperclip, Image as ImageIcon, Ban, Dot, Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAgentStore } from "@/lib/stores/agentStore";
 import { format } from "date-fns";
@@ -15,19 +15,20 @@ import { ScrollArea } from "../ui/scroll-area";
 import { redactPii } from "@/ai/flows/redact-pii";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { useToast } from "@/hooks/use-toast";
+import { CircularProgress } from "../shared/CircularProgress";
 
 interface ChatWindowProps {
     session: ChatSession;
 }
 
 const EMOJIS = [
-    '😀', '😂', '😊', '😍', '🤔', '😢', '😠', '😮', 
-    '👍', '👎', '❤️', '💔', '🎉', '🔥', '🙏', '🙌', 
+    '😀', '😂', '😊', '😍', '🤔', '😢', '😠', '😮',
+    '👍', '👎', '❤️', '💔', '🎉', '🔥', '🙏', '🙌',
     '👏', '💪', '💯', '✨', '✅', '❌', '❓', '💡'
 ];
 
 export function ChatWindow({ session }: ChatWindowProps) {
-    const { agent, customers, sendMessage, settings } = useAgentStore();
+    const { agent, customers, sendMessage, settings, addMessageToSession } = useAgentStore();
     const customer = customers.find(c => c.id === session.customerId);
     const [message, setMessage] = useState("");
     const [isRedacting, setIsRedacting] = useState(false);
@@ -50,7 +51,7 @@ export function ChatWindow({ session }: ChatWindowProps) {
 
     const handleSend = async () => {
         if (!message.trim() || isCustomerBlocked) return;
-        await sendMessage(session.id, message);
+        await sendMessage(session.id, { type: 'text', text: message });
         setMessage("");
     };
     
@@ -82,8 +83,61 @@ export function ChatWindow({ session }: ChatWindowProps) {
     
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            toast({ title: "文件已选择", description: `已选择文件: ${file.name} (模拟上传)` });
+        if (file && agent) {
+            const tempId = `file-${Date.now()}`;
+            const fileMessage: FileChatMessage = {
+                id: tempId,
+                type: 'file',
+                sender: 'agent',
+                agentId: agent.id,
+                timestamp: new Date().toISOString(),
+                file: {
+                    name: file.name,
+                    size: file.size,
+                    progress: 0
+                }
+            };
+            
+            addMessageToSession(session.id, fileMessage);
+
+            // Simulate upload
+            const interval = setInterval(() => {
+                useAgentStore.setState(state => {
+                    const targetSession = state.sessions.find(s => s.id === session.id);
+                    if (!targetSession) {
+                        clearInterval(interval);
+                        return state;
+                    }
+                    
+                    const messageToUpdate = targetSession.messages.find(m => m.id === tempId) as FileChatMessage | undefined;
+                    if (!messageToUpdate) {
+                         clearInterval(interval);
+                        return state;
+                    }
+
+                    const currentProgress = messageToUpdate.file.progress;
+                    const nextProgress = Math.min(currentProgress + Math.random() * 25, 100);
+                    
+                    const updatedMessage = {
+                        ...messageToUpdate,
+                        file: { ...messageToUpdate.file, progress: nextProgress }
+                    };
+
+                    if (nextProgress >= 100) {
+                        clearInterval(interval);
+                    }
+                    
+                    return {
+                        ...state,
+                        sessions: state.sessions.map(s => 
+                            s.id === session.id ? {
+                                ...s,
+                                messages: s.messages.map(m => m.id === tempId ? updatedMessage : m)
+                            } : s
+                        )
+                    }
+                });
+            }, 500);
         }
         e.target.value = "";
     }
@@ -95,6 +149,15 @@ export function ChatWindow({ session }: ChatWindowProps) {
             description: "语音输入功能正在开发中。"
         });
     }
+    
+    const formatFileSize = (bytes: number) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
 
     if (!customer || !agent) return null;
 
@@ -125,8 +188,20 @@ export function ChatWindow({ session }: ChatWindowProps) {
                                 "max-w-md p-3 rounded-2xl", 
                                 msg.sender === 'agent' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'
                             )}>
-                                <p className="text-sm">{msg.text}</p>
-                                <p className={cn("text-xs mt-1", msg.sender === 'agent' ? 'text-primary-foreground/70' : 'text-muted-foreground/70')}>
+                                {msg.type === 'text' ? (
+                                    <p className="text-sm">{msg.text}</p>
+                                ) : (
+                                    <div className="flex items-center gap-3">
+                                        <CircularProgress progress={msg.file.progress} />
+                                        <div>
+                                            <p className="text-sm font-medium break-all">{msg.file.name}</p>
+                                            <p className={cn("text-xs", msg.sender === 'agent' ? 'text-primary-foreground/80' : 'text-muted-foreground')}>
+                                                {formatFileSize(msg.file.size)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                                <p className={cn("text-xs mt-1 text-right", msg.sender === 'agent' ? 'text-primary-foreground/70' : 'text-muted-foreground/70')}>
                                     {format(new Date(msg.timestamp), 'p', { locale: zhCN })}
                                 </p>
                            </div>

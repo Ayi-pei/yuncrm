@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAgentStore } from "@/lib/stores/agentStore";
@@ -15,7 +16,7 @@ export function QuickReplies() {
     
     const handleSendReply = (message: string) => {
         if(activeSessionId) {
-            sendMessage(activeSessionId, message);
+            sendMessage(activeSessionId, {type: 'text', text: message});
         }
     }
 

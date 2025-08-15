@@ -137,12 +137,14 @@ let chatSessions: ChatSession[] = [
     messages: [
       {
         id: "msg-01",
+        type: "text",
         text: "你好，我需要订单方面的帮助。",
         sender: "customer",
         timestamp: new Date(Date.now() - 60000 * 5).toISOString(),
       },
       {
         id: "msg-02",
+        type: "text",
         text: "您好！我当然可以帮助您。请问您的订单号是多少？",
         sender: "agent",
         agentId: "agent-01",
@@ -159,6 +161,7 @@ let chatSessions: ChatSession[] = [
     messages: [
       {
         id: "msg-03",
+        type: 'text',
         text: "我有一个关于价格的问题。",
         sender: "customer",
         timestamp: new Date(Date.now() - 60000 * 10).toISOString(),
@@ -468,6 +471,7 @@ export const mockApi = {
           createdAt: new Date().toISOString(),
           messages: [{
             id: generateId('msg'),
+            type: 'text',
             text: welcomeMessage,
             sender: 'agent',
             agentId: agent.id,

@@ -74,6 +74,7 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
         setIsSending(true);
         const newMessage: ChatMessage = {
             id: '', 
+            type: 'text',
             text: message, 
             sender: 'customer', 
             timestamp: new Date().toISOString()
@@ -146,7 +147,7 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
                                 </Avatar>
                            )}
                            <div className={cn("max-w-md p-3 rounded-2xl", msg.sender === 'customer' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none')}>
-                                <p className="text-sm">{msg.text}</p>
+                                <p className="text-sm">{msg.type === 'text' ? msg.text : msg.file.name}</p>
                            </div>
                             {msg.sender === 'customer' && (
                                 <Avatar className="h-8 w-8">
