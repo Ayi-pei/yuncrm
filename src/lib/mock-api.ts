@@ -308,7 +308,7 @@ export const mockApi = {
     
     const newKey: AccessKey = {
       id: generateId('key'),
-      key: `${data.key_type.toUpperCase()}-${data.name.toUpperCase().replace(/\s/g, "")}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      key: `${data.key_type.toUpperCase()}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
       key_type: data.key_type,
       name: data.name,
       notes: data.notes,
@@ -449,36 +449,37 @@ export const mockApi = {
   },
 
   async extendAgentKey(agentId: string, newKeyString: string): Promise<AccessKey | null> {
-    await delay(600);
-    const agent = agents.find(a => a.id === agentId);
-    if (!agent) throw new Error("坐席不存在。");
+    try {
+        const agent = agents.find(a => a.id === agentId);
+        if (!agent) throw new Error("坐席不存在。");
 
-    const newKey = accessKeys.find(k => k.key === newKeyString);
-    if (!newKey) throw new Error("提供的新密钥无效。");
-    if (newKey.key_type !== 'agent') throw new Error("该密钥非坐席密钥");
-    if (newKey.status !== 'active') throw new Error("该密钥非激活状态");
-    if (newKey.userId) throw new Error("该密钥已被其他坐席绑定");
-    if (newKey.expiresAt && new Date(newKey.expiresAt) < new Date()) {
-        throw new Error("该密钥已过期。");
-    }
+        const newKey = accessKeys.find(k => k.key === newKeyString);
+        if (!newKey) throw new Error("提供的新密钥无效。");
+        if (newKey.key_type !== 'agent') throw new Error("该密钥非坐席密钥");
+        if (newKey.status !== 'active') throw new Error("该密钥非激活状态");
+        if (newKey.userId) throw new Error("该密钥已被其他坐席绑定");
+        if (newKey.expiresAt && new Date(newKey.expiresAt) < new Date()) {
+            throw new Error("该密钥已过期。");
+        }
+        
+        const oldKeyIndex = accessKeys.findIndex(k => k.userId === agentId);
+        if (oldKeyIndex !== -1) {
+            accessKeys.splice(oldKeyIndex, 1);
+        }
 
-    // Unbind and remove the old key for this agent
-    const oldKeyIndex = accessKeys.findIndex(k => k.userId === agentId);
-    if (oldKeyIndex !== -1) {
-        accessKeys.splice(oldKeyIndex, 1);
-    }
-    
-    // Bind the new key
-    newKey.userId = agentId;
-    
-    // Invalidate aliases associated with this agent
-    for (const [token, alias] of aliasMap.entries()) {
-      if(alias.shareId === agentId) {
-        aliasMap.delete(token);
-      }
-    }
+        newKey.userId = agentId;
 
-    return newKey;
+        // Invalidate aliases associated with this agent
+        for (const [token, alias] of aliasMap.entries()) {
+            if (alias.shareId === agentId) {
+                aliasMap.delete(token);
+            }
+        }
+        
+        return newKey;
+    } catch (e) {
+        throw e;
+    }
   },
   
   async deleteCustomer(customerId: string): Promise<boolean> {
@@ -496,9 +497,10 @@ export const mockApi = {
     const agent = agents.find(a => a.id === agentId);
     if (!agent) return null;
     
-    const existingAlias = Array.from(aliasMap.values()).find(a => a.shareId === agentId && new Date(a.expireAt) > new Date());
+    // Check for existing valid alias first
+    const existingAlias = Array.from(aliasMap.values()).find(a => a.shareId === agentId && new Date() < new Date(a.expireAt));
     if (existingAlias) {
-      return existingAlias;
+        return existingAlias;
     }
 
     const shareId = agent.id;
