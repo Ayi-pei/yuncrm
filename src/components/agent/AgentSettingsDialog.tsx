@@ -12,7 +12,7 @@ import { Textarea } from "../ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import type { AgentSettings, QuickReply } from "@/lib/types";
-import { PlusCircle, Trash, KeyRound, Bell, Loader2 } from "lucide-react";
+import { PlusCircle, Trash, KeyRound, Bell, Loader2, Edit, Save } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { zhCN } from 'date-fns/locale';
 import { Switch } from "../ui/switch";
@@ -34,6 +34,7 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
     const [quickReplies, setQuickReplies] = useState<QuickReply[]>(settings?.quickReplies || []);
     const [showReminder, setShowReminder] = useState(true);
     const [newKey, setNewKey] = useState("");
+    const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
 
     useEffect(() => {
         if(agent) setName(agent.name);
@@ -42,6 +43,7 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
             setQuickReplies(settings.quickReplies);
         }
         setNewKey(""); // Reset on open
+        setEditingReplyId(null); // Reset editing state on open
     }, [agent, settings, isOpen]);
 
     useEffect(() => {
@@ -81,10 +83,13 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
         const newSettings: AgentSettings = { ...settings, welcomeMessage, quickReplies };
         await updateSettings(agent.id, newSettings);
         toast({ title: "设置已保存", description: "您的聊天设置已更新。" });
+        setEditingReplyId(null);
     }
 
     const addQuickReply = () => {
-        setQuickReplies([...quickReplies, { id: `new-${Date.now()}`, shortcut: "", message: "" }]);
+        const newId = `new-${Date.now()}`;
+        setQuickReplies([...quickReplies, { id: newId, shortcut: "", message: "" }]);
+        setEditingReplyId(newId);
     }
     
     const updateQuickReply = (id: string, field: 'shortcut' | 'message', value: string) => {
@@ -162,10 +167,21 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
                                 </div>
                                 <div className="space-y-2">
                                     {quickReplies.map(qr => (
-                                        <div key={qr.id} className="flex items-center gap-2">
-                                            <Input placeholder="快捷指令 (例如 a)" value={qr.shortcut} onChange={e => updateQuickReply(qr.id, 'shortcut', e.target.value)}/>
-                                            <Input placeholder="快捷回复内容" className="flex-1" value={qr.message} onChange={e => updateQuickReply(qr.id, 'message', e.target.value)} />
-                                            <Button variant="ghost" size="icon" onClick={() => removeQuickReply(qr.id)}><Trash className="h-4 w-4 text-destructive"/></Button>
+                                        <div key={qr.id} className="flex items-center gap-2 p-2 rounded-md border">
+                                            {editingReplyId === qr.id ? (
+                                                <>
+                                                    <Input placeholder="快捷指令 (例如 a)" value={qr.shortcut} onChange={e => updateQuickReply(qr.id, 'shortcut', e.target.value)} className="w-28"/>
+                                                    <Input placeholder="快捷回复内容" className="flex-1" value={qr.message} onChange={e => updateQuickReply(qr.id, 'message', e.target.value)} />
+                                                    <Button variant="ghost" size="icon" onClick={() => setEditingReplyId(null)}><Save className="h-4 w-4 text-primary"/></Button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <code className="px-2 py-1 bg-muted rounded-md text-sm font-semibold w-28 text-center truncate">{qr.shortcut}</code>
+                                                    <p className="flex-1 text-sm text-muted-foreground truncate">{qr.message}</p>
+                                                    <Button variant="ghost" size="icon" onClick={() => setEditingReplyId(qr.id)}><Edit className="h-4 w-4"/></Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => removeQuickReply(qr.id)}><Trash className="h-4 w-4 text-destructive"/></Button>
+                                                </>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
