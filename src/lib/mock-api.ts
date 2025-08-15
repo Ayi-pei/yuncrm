@@ -1,4 +1,5 @@
 
+
 // Simulates a backend API, managing all data in-memory.
 import {
   AccessKey,
@@ -21,7 +22,6 @@ const getFutureDate = (days: number) => new Date(Date.now() + days * 24 * 60 * 6
 
 // --- ALIAS/TOKEN UTILS ---
 const generateToken = (length = 5) => {
-    // Chars that are easy to read and type.
     const alphabet = 'abcdefghjkmnpqrstuvwxyz23456789';
     let out = '';
     for (let i = 0; i < length; i++) {
@@ -97,7 +97,7 @@ let agents: Agent[] = [
     name: "小爱",
     avatar: "https://i.pravatar.cc/150?u=alice",
     status: "online",
-    shareId: 'agent-share-alice',
+    shareId: 'al1ce',
     accessKeyId: "key-agent-01",
     lastActiveAt: new Date().toISOString(),
     role: "agent",
@@ -107,7 +107,7 @@ let agents: Agent[] = [
     name: "小博",
     avatar: "https://i.pravatar.cc/150?u=bob",
     status: "busy",
-    shareId: 'agent-share-bob',
+    shareId: 'b0b45',
     accessKeyId: "key-agent-02",
     lastActiveAt: new Date().toISOString(),
     role: "agent",
@@ -117,7 +117,7 @@ let agents: Agent[] = [
     name: "小驰",
     avatar: "https://i.pravatar.cc/150?u=charlie",
     status: "offline",
-    shareId: 'agent-share-charlie',
+    shareId: 'ch4rl',
     accessKeyId: "key-agent-03",
     lastActiveAt: new Date(Date.now() - 86400000).toISOString(),
     role: "agent",
@@ -190,7 +190,7 @@ let chatSessions: ChatSession[] = [
 
 let agentSettings: Record<string, AgentSettings> = {
     "agent-01": {
-        welcomeMessage: "欢迎！今天有什么可以帮您的吗？",
+        welcomeMessages: ["欢迎！今天有什么可以帮您的吗？", "请随时提出您的问题。"],
         quickReplies: [
             { id: "qr-1", shortcut: "你好", message: "您好，很高兴为您服务！" },
             { id: "qr-2", shortcut: "感谢", message: "不客气！还有其他可以帮助您的吗？" },
@@ -198,12 +198,12 @@ let agentSettings: Record<string, AgentSettings> = {
         blockedIps: [],
     },
     "agent-02": {
-        welcomeMessage: "您好，感谢您的联系。",
+        welcomeMessages: ["您好，感谢您的联系。"],
         quickReplies: [],
         blockedIps: ["1.2.3.4"],
     },
     "agent-03": {
-        welcomeMessage: "您好！",
+        welcomeMessages: ["您好！"],
         quickReplies: [],
         blockedIps: [],
     }
@@ -292,13 +292,13 @@ export const mockApi = {
             name: newKey.name,
             avatar: `https://i.pravatar.cc/150?u=${agentId}`,
             status: "offline",
-            shareId: generateId('share'),
+            shareId: generateToken(5),
             accessKeyId: newKey.id,
             role: 'agent',
             lastActiveAt: new Date().toISOString(),
         }
         agents.push(newAgent);
-        agentSettings[newAgent.id] = { welcomeMessage: "欢迎!", quickReplies: [], blockedIps: [] };
+        agentSettings[newAgent.id] = { welcomeMessages: ["欢迎!"], quickReplies: [], blockedIps: [] };
     }
 
     return newKey;
@@ -369,7 +369,6 @@ export const mockApi = {
     if (!session) throw new Error("Session not found");
 
     const newMessage = { ...message, id: generateId('msg'), timestamp: new Date().toISOString() };
-    
     session.messages.push(newMessage);
     
     return newMessage;
@@ -471,10 +470,11 @@ export const mockApi = {
 
   async getOrCreateAlias(shareId: string): Promise<Alias | null> {
     await delay(100);
-    if (aliasMap.has(shareId)) {
-        return aliasMap.get(shareId)!;
+    const existingAlias = Array.from(aliasMap.values()).find(a => a.shareId === shareId);
+    if (existingAlias) {
+        return existingAlias;
     }
-    // Try to generate a unique token
+
     for (let i = 0; i < 5; i++) {
         const token = generateToken(5);
         if (!tokenMap.has(token)) {
@@ -488,7 +488,7 @@ export const mockApi = {
             return alias;
         }
     }
-    return null; // Failed to generate a unique token
+    return null; 
   },
 
   async getChatDataForVisitorByToken(token: string) {
@@ -511,7 +511,15 @@ export const mockApi = {
       };
       customers.push(newCustomer);
 
-      const welcomeMessage = agentSettings[agent.id]?.welcomeMessage || "您好！有什么可以帮您的吗？";
+      const welcomeMessages = agentSettings[agent.id]?.welcomeMessages || ["您好！有什么可以帮您的吗？"];
+      const initialMessages: ChatMessage[] = welcomeMessages.filter(m => m.trim() !== '').map((msg, index) => ({
+        id: generateId(`msg-welcome-${index}`),
+        type: 'text',
+        text: msg,
+        sender: 'agent',
+        agentId: agent.id,
+        timestamp: new Date(Date.now() + index).toISOString(), // Ensure unique timestamps
+      }));
       
       const newSession: ChatSession = {
           id: generateId('session'),
@@ -519,14 +527,7 @@ export const mockApi = {
           agentId: agent.id,
           status: "pending",
           createdAt: new Date().toISOString(),
-          messages: [{
-            id: generateId('msg'),
-            type: 'text',
-            text: welcomeMessage,
-            sender: 'agent',
-            agentId: agent.id,
-            timestamp: new Date().toISOString(),
-          }]
+          messages: initialMessages
       };
       chatSessions.push(newSession);
 

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
@@ -65,7 +66,7 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
     const { toast } = useToast();
     
     const [name, setName] = useState(agent?.name || "");
-    const [welcomeMessage, setWelcomeMessage] = useState(settings?.welcomeMessage || "");
+    const [welcomeMessages, setWelcomeMessages] = useState<string[]>(settings?.welcomeMessages || ["", ""]);
     const [quickReplies, setQuickReplies] = useState<QuickReply[]>(settings?.quickReplies || []);
     const [showReminder, setShowReminder] = useState(true);
     const [newKey, setNewKey] = useState("");
@@ -81,7 +82,10 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
     useEffect(() => {
         if(agent) setName(agent.name);
         if(settings) {
-            setWelcomeMessage(settings.welcomeMessage);
+            setWelcomeMessages([
+                settings.welcomeMessages?.[0] || "",
+                settings.welcomeMessages?.[1] || "",
+            ]);
             setQuickReplies(settings.quickReplies);
         }
         setNewKey(""); // Reset on open
@@ -122,7 +126,8 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
     }
     
     const handleSettingsSave = async () => {
-        const newSettings: AgentSettings = { ...settings, welcomeMessage, quickReplies };
+        const filteredWelcomeMessages = welcomeMessages.filter(m => m.trim() !== "");
+        const newSettings: AgentSettings = { ...settings, welcomeMessages: filteredWelcomeMessages, quickReplies };
         await updateSettings(agent.id, newSettings);
         toast({ title: "设置已保存", description: "您的聊天设置已更新。" });
         setEditingReplyId(null);
@@ -212,8 +217,18 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
                     <TabsContent value="chat" className="p-1">
                         <div className="space-y-6 py-4">
                             <div className="space-y-2">
-                                <Label htmlFor="welcome">欢迎消息</Label>
-                                <Textarea id="welcome" value={welcomeMessage} onChange={(e) => setWelcomeMessage(e.target.value)} placeholder="访客看到的第一条消息。" />
+                                <Label>欢迎消息</Label>
+                                <p className="text-sm text-muted-foreground">设置一或两条欢迎语，它们将依次发送给访客。</p>
+                                <Textarea 
+                                    value={welcomeMessages[0]} 
+                                    onChange={(e) => setWelcomeMessages([e.target.value, welcomeMessages[1]])} 
+                                    placeholder="第一条欢迎消息 (必填)" 
+                                />
+                                <Textarea 
+                                     value={welcomeMessages[1]} 
+                                     onChange={(e) => setWelcomeMessages([welcomeMessages[0], e.target.value])} 
+                                     placeholder="第二条欢迎消息 (可选，将在3秒后发送)" 
+                                />
                             </div>
                             <div className="space-y-4">
                                 <div>

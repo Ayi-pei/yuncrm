@@ -90,7 +90,7 @@ export interface QuickReply {
 }
 
 export interface AgentSettings {
-    welcomeMessage: string; 
+    welcomeMessages: string[]; 
     quickReplies: QuickReply[];
     blockedIps: string[];
 }

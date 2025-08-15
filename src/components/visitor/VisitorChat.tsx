@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -25,6 +26,7 @@ type ChatData = {
 
 export function VisitorChat({ aliasToken }: VisitorChatProps) {
     const [data, setData] = useState<ChatData | null>(null);
+    const [displayedMessages, setDisplayedMessages] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState("");
@@ -40,7 +42,6 @@ export function VisitorChat({ aliasToken }: VisitorChatProps) {
                 return;
             }
             try {
-                // Use the new API method to get data via the alias token
                 const chatData = await mockApi.getChatDataForVisitorByToken(aliasToken);
                 if (!chatData) {
                     setError("此聊天链接无效或坐席不再可用。");
@@ -57,23 +58,53 @@ export function VisitorChat({ aliasToken }: VisitorChatProps) {
     }, [aliasToken]);
 
     useEffect(() => {
+        if (data?.session?.messages) {
+            // Logic to display welcome messages with a delay
+            const welcomeMessages = data.session.messages.filter(m => m.sender === 'agent');
+            const otherMessages = data.session.messages.filter(m => m.sender !== 'agent');
+
+            if (welcomeMessages.length > 0) {
+                // Display first message immediately
+                setDisplayedMessages([welcomeMessages[0], ...otherMessages]);
+
+                // If there's a second message, display it after a delay
+                if (welcomeMessages.length > 1) {
+                    const timer = setTimeout(() => {
+                        setDisplayedMessages(current => [...current, welcomeMessages[1]]);
+                    }, 3000); // 3-second delay
+                    return () => clearTimeout(timer);
+                }
+            } else {
+                 setDisplayedMessages(data.session.messages);
+            }
+        }
+    }, [data?.session?.messages]);
+
+    useEffect(() => {
         if (data?.session.id) {
             const handleManualPoll = async () => {
                  const updatedSession = await mockApi.getSessionUpdates(data.session.id);
                  if (updatedSession && updatedSession.messages.length > (data.session.messages.length || 0)) {
+                     const newMessages = updatedSession.messages.filter(
+                        (msg) => !displayedMessages.some(dMsg => dMsg.id === msg.id) && msg.sender !== 'agent' // Only add customer messages this way
+                     );
+                     if(newMessages.length > 0) {
+                         setDisplayedMessages(current => [...current, ...newMessages]);
+                     }
+                     // Update data silently
                      setData(d => d ? { ...d, session: updatedSession } : null);
                  }
             }
             const timer = setInterval(handleManualPoll, 1500);
             return () => clearInterval(timer);
         }
-    }, [data?.session.id, data?.session.messages.length]);
+    }, [data?.session.id, data?.session.messages.length, displayedMessages]);
     
     useEffect(() => {
         if (scrollAreaRef.current) {
             scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
         }
-    }, [data?.session.messages]);
+    }, [displayedMessages]);
 
     const handleSend = async () => {
         if (!message.trim() || !data) return;
@@ -86,13 +117,9 @@ export function VisitorChat({ aliasToken }: VisitorChatProps) {
             timestamp: new Date().toISOString()
         };
         try {
-            await mockApi.sendMessage(data.session.id, newMessage);
+            const sentMessage = await mockApi.sendMessage(data.session.id, newMessage);
+            setDisplayedMessages(current => [...current, sentMessage]);
             setMessage("");
-            
-            const updatedSession = await mockApi.getSessionUpdates(data.session.id);
-            if (updatedSession) {
-                setData(d => d ? { ...d, session: updatedSession } : null);
-            }
 
         } catch(e) {
             console.error("Failed to send message", e);
@@ -128,7 +155,7 @@ export function VisitorChat({ aliasToken }: VisitorChatProps) {
         return <div className="flex-1 flex items-center justify-center p-4 text-center text-destructive">{error || "发生意外错误。"}</div>;
     }
     
-    const { agent, session, customer } = data;
+    const { agent, customer } = data;
 
     return (
         <>
@@ -144,7 +171,7 @@ export function VisitorChat({ aliasToken }: VisitorChatProps) {
             </header>
             <ScrollArea className="flex-1" ref={scrollAreaRef}>
                 <div className="p-6 space-y-6">
-                    {session.messages.map((msg) => (
+                    {displayedMessages.sort((a,b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()).map((msg) => (
                          <div key={msg.id} className={cn("flex items-end gap-3", msg.sender === 'customer' && "justify-end")}>
                            {msg.sender === 'agent' && (
                                 <Avatar className="h-8 w-8">
