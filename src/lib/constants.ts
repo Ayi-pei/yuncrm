@@ -1,2 +1,2 @@
-export const APP_NAME = "智能体空间";
+export const APP_NAME = "云聚-CRM";
 export const ADMIN_KEY = "ADMIN-SUPER-SECRET";

@@ -4,7 +4,7 @@ import { AppProviders } from "@/components/providers/AppProviders";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "智能体空间",
+  title: "云聚-CRM",
   description: "多智能体客户支持系统",
 };
 
