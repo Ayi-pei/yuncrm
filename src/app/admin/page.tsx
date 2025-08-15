@@ -1,17 +1,27 @@
+
+'use client';
+
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { KeyRound, Users, ArrowRight } from "lucide-react";
+import { KeyRound, Users, ArrowRight, LogOut } from "lucide-react";
 import { APP_NAME } from "@/lib/constants";
 import Link from "next/link";
-import { DashboardStats } from "@/components/admin/DashboardStats";
+import { useAuthStore } from "@/lib/stores/authStore";
+import { Button } from "@/components/ui/button";
 
 export default function AdminDashboardPage() {
+  const { logout } = useAuthStore();
   return (
     <div className="flex flex-col gap-8">
       <PageHeader 
         title={`欢迎回来，管理员！`}
         description={`您正在管理 ${APP_NAME}。在这里您可以管理访问密钥和客服智能体。`} 
-      />
+      >
+        <Button variant="outline" onClick={logout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          退出登录
+        </Button>
+      </PageHeader>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Link href="/admin/keys">
@@ -48,7 +58,6 @@ export default function AdminDashboardPage() {
           </Card>
         </Link>
       </div>
-       <DashboardStats />
     </div>
   );
 }
