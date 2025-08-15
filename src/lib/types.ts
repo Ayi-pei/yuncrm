@@ -1,4 +1,5 @@
 
+
 export type RoleName = 'super_admin' | 'admin' | 'supervisor' | 'senior_agent' | 'agent' | 'trainee';
 
 export interface Role {
@@ -36,18 +37,19 @@ export type AccessKeyStatus = 'active' | 'expired' | 'suspended' | 'used';
 
 export interface AccessKey {
     id: string; // UUID
-    keyValue: string;
-    keyType: AccessKeyType;
+    key: string;
+    role: AccessKeyType;
     status: AccessKeyStatus;
     userId?: string; // UUID of a user
     createdBy?: string; // UUID of a user
-    expiresAt: string; // Timestamp
+    expiresAt: string | null; // Timestamp
     maxUsage?: number;
     usageCount: number;
-    lastUsedAt?: string; // Timestamp
+    lastUsedAt?: string | null; // Timestamp
     notes?: string;
+    name: string; // Added for compatibility with current UI
     createdAt: string; // Timestamp
-    updatedAt: string; // Timestamp
+    updatedAt?: string; // Timestamp
 }
 
 
@@ -55,21 +57,21 @@ export interface Customer {
   id: string; // UUID
   name: string;
   email?: string;
-  avatarUrl?: string;
+  avatar?: string; // Changed from avatarUrl for consistency
   phone?: string;
   ipAddress?: string;
-  deviceInfo?: string;
+  device?: string; // Changed from deviceInfo for consistency
   userAgent?: string;
   location?: string;
   isOnline: boolean;
   isBlacklisted: boolean;
   hasReceivedWelcome: boolean;
-  lastSeenAt: string; // Timestamp
+  firstSeen: string; // Changed from lastSeenAt for consistency
   createdAt: string; // Timestamp
   updatedAt: string; // Timestamp
 }
 
-export type ChatSessionStatus = 'waiting' | 'active' | 'ended' | 'archived';
+export type ChatSessionStatus = 'pending' | 'active' | 'ended' | 'archived'; // pending instead of waiting for current logic
 export type ChatPriority = 'low' | 'normal' | 'high' | 'vip';
 
 export interface ChatSession {
@@ -77,18 +79,16 @@ export interface ChatSession {
   customerId: string; // UUID
   agentId?: string; // UUID
   status: ChatSessionStatus;
-  priority: ChatPriority;
-  source: string; // 'web', 'mobile', 'api'
-  startedAt: string; // Timestamp
+  priority?: ChatPriority;
+  source?: string; // 'web', 'mobile', 'api'
+  createdAt: string; // Timestamp. Renamed from startedAt for consistency
   endedAt?: string; // Timestamp
-  lastMessageAt: string; // Timestamp
-  messageCount: number;
+  lastMessageAt?: string; // Timestamp
+  messageCount?: number;
   satisfactionRating?: number;
-  welcomeSent: boolean;
+  welcomeSent?: boolean;
   tags?: string[];
   metadata?: Record<string, any>; // JSONB
-  createdAt: string; // Timestamp
-  updatedAt: string; // Timestamp
   messages: ChatMessage[]; // Populated for UI
 }
 
@@ -98,56 +98,52 @@ export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed'
 
 export interface ChatMessage {
   id: string; // UUID
-  sessionId: string; // UUID
+  sessionId?: string; // UUID
+  sender: MessageSenderType; // simplified from senderType
   senderId?: string; // UUID of customer or user
-  senderType: MessageSenderType;
-  messageType: MessageType;
-  content: string;
+  messageType?: MessageType;
+  text: string; // simplified from content
   fileUrl?: string;
   fileName?: string;
   fileSize?: number;
   fileType?: string;
-  status: MessageStatus;
-  isWelcomeMessage: boolean;
+  status?: MessageStatus;
+  isWelcomeMessage?: boolean;
   metadata?: Record<string, any>; // JSONB
-  createdAt: string; // Timestamp
-  updatedAt: string; // Timestamp
-  // For convenience, we'll need sender info for the UI
-  sender?: {
-      name: string;
-      avatarUrl?: string;
-  }
+  timestamp: string; // Renamed from createdAt for consistency
+  agentId?: string; // Keep for current logic
 }
 
 export interface QuickReply {
   id: string; // UUID
-  agentId: string; // UUID
-  title: string;
-  content: string;
+  agentId?: string; // UUID
+  shortcut: string; // simplified from title
+  message: string; // simplified from content
   category?: string;
-  usageCount: number;
-  isActive: boolean;
-  createdAt: string; // Timestamp
-  updatedAt:string; // Timestamp
+  usageCount?: number;
+  isActive?: boolean;
+  createdAt?: string; // Timestamp
+  updatedAt?: string; // Timestamp
 }
 
 export interface AgentSettings {
-    id: string; // UUID
-    agentId: string; // UUID
-    autoWelcomeEnabled: boolean;
-    soundNotifications: boolean;
-    autoReplyEnabled: boolean;
-    maxConcurrentSessions: number;
+    welcomeMessage: string; // Simplified for now
+    quickReplies: QuickReply[];
+    blockedIps: string[];
+    autoWelcomeEnabled?: boolean;
+    soundNotifications?: boolean;
+    autoReplyEnabled?: boolean;
+    maxConcurrentSessions?: number;
     workingHours?: any; // JSONB
-    breakDuration: number; // minutes
+    breakDuration?: number; // minutes
 }
 
-// Keeping a simplified version for the UI for now
+// Simplified User for UI purposes, will be replaced by the main User type
 export interface AppUser {
   id: string;
-  role: RoleName;
+  role: 'admin' | 'agent';
   name: string;
-  avatarUrl?: string;
+  avatar?: string;
   shareId?: string;
-  status?: UserStatus;
+  status?: AgentStatus;
 }
