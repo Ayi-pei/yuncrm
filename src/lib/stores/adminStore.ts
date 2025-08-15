@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { mockApi } from "@/lib/mock-api";
-import type { AccessKey, Agent } from "@/lib/types";
+import type { AccessKey, User, UserRole } from "@/lib/types";
 
 interface AdminState {
   dashboardData: {
@@ -10,13 +10,13 @@ interface AdminState {
     activeKeys: number;
   } | null;
   keys: AccessKey[];
-  agents: Agent[];
+  agents: User[];
   isLoading: boolean;
   error: string | null;
   fetchDashboardData: () => Promise<void>;
   fetchKeys: () => Promise<void>;
   fetchAgents: () => Promise<void>;
-  createKey: (data: { name: string; role: 'admin' | 'agent' }) => Promise<AccessKey | null>;
+  createKey: (data: Partial<Omit<AccessKey, 'id' | 'key' | 'createdAt'>>) => Promise<AccessKey | null>;
   updateKey: (id: string, updates: Partial<AccessKey>) => Promise<AccessKey | null>;
   deleteKey: (id: string) => Promise<boolean>;
 }
@@ -57,7 +57,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   createKey: async (data) => {
     try {
         const newKey = await mockApi.createAccessKey(data);
-        set(state => ({ keys: [...state.keys, newKey] }));
+        set(state => ({ keys: [...state.keys, newKey].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) }));
         return newKey;
     } catch (e) {
         set({ error: e instanceof Error ? e.message : "Failed to create key" });

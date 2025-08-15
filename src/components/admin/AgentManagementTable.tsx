@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "../ui/skeleton";
-import { Progress } from "../ui/progress";
+import type { User, UserStatus } from "@/lib/types";
 
 export function AgentManagementTable() {
   const { agents, fetchAgents, isLoading } = useAdminStore();
@@ -15,19 +15,21 @@ export function AgentManagementTable() {
     fetchAgents();
   }, [fetchAgents]);
 
-  const getStatusVariant = (status: 'online' | 'busy' | 'offline') => {
+  const getStatusVariant = (status: UserStatus) => {
     switch(status) {
         case 'online': return 'bg-green-500';
         case 'busy': return 'bg-orange-500';
         case 'offline': return 'bg-gray-400';
+        case 'away': return 'bg-yellow-400';
     }
   }
   
-  const translateStatus = (status: 'online' | 'busy' | 'offline') => {
+  const translateStatus = (status: UserStatus) => {
     switch(status) {
         case 'online': return '在线';
         case 'busy': return '忙碌';
         case 'offline': return '离线';
+        case 'away': return '离开';
     }
   }
 
@@ -37,9 +39,10 @@ export function AgentManagementTable() {
         <TableHeader>
           <TableRow>
             <TableHead>智能体</TableHead>
+            <TableHead>角色</TableHead>
             <TableHead>状态</TableHead>
-            <TableHead>会话负载</TableHead>
-            <TableHead>共享ID</TableHead>
+            <TableHead>上次活跃</TableHead>
+            <TableHead>关联密钥</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -47,43 +50,46 @@ export function AgentManagementTable() {
             [...Array(3)].map((_, i) => (
                 <TableRow key={i}>
                     <TableCell><div className="flex items-center gap-3"><Skeleton className="h-10 w-10 rounded-full" /><Skeleton className="h-5 w-24" /></div></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                 </TableRow>
             ))
           ) : agents.length > 0 ? (
-            agents.map((agent) => (
+            agents.map((agent: User) => (
               <TableRow key={agent.id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage src={agent.avatar} alt={agent.name} />
+                      <AvatarImage src={agent.avatarUrl} alt={agent.name} />
                       <AvatarFallback>{agent.name[0]}</AvatarFallback>
                     </Avatar>
                     <span className="font-medium">{agent.name}</span>
                   </div>
                 </TableCell>
                 <TableCell>
-                    <Badge className="capitalize border-none">
-                        <span className={`h-2 w-2 rounded-full mr-2 ${getStatusVariant(agent.status)}`}></span>
+                    <Badge variant="outline" style={{ borderColor: agent.role?.color, color: agent.role?.color }}>
+                      {agent.role?.displayName}
+                    </Badge>
+                </TableCell>
+                <TableCell>
+                    <Badge className="capitalize border-none text-white" style={{backgroundColor: getStatusVariant(agent.status)}}>
+                        <span className={`h-2 w-2 rounded-full mr-2 bg-white`}></span>
                         {translateStatus(agent.status)}
                     </Badge>
                 </TableCell>
                 <TableCell>
-                    <div className="flex items-center gap-2">
-                        <span>{agent.sessionLoad}/{agent.maxLoad}</span>
-                        <Progress value={(agent.sessionLoad / agent.maxLoad) * 100} className="w-24 h-2" />
-                    </div>
+                    {agent.lastActiveAt ? new Date(agent.lastActiveAt).toLocaleString() : 'N/A'}
                 </TableCell>
                 <TableCell>
-                  <code className="text-sm text-muted-foreground">{agent.shareId}</code>
+                  <code className="text-sm text-muted-foreground">{agent.accessKey}</code>
                 </TableCell>
               </TableRow>
             ))
           ) : (
             <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                     未找到智能体。
                 </TableCell>
             </TableRow>
