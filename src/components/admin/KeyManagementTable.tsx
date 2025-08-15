@@ -17,6 +17,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
 import { PageHeader } from "../shared/PageHeader";
+import { cn } from "@/lib/utils";
 
 export function KeyManagementTable() {
   const { keys, fetchKeys, isLoading, createKey, updateKey, deleteKey } = useAdminStore();
