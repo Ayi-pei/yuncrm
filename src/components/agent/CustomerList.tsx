@@ -7,7 +7,6 @@ import { formatDistanceToNow } from "date-fns";
 import { zhCN } from 'date-fns/locale';
 import { Bot, User as UserIcon, Archive, Trash2 } from "lucide-react";
 import { AgentProfile } from "./AgentProfile";
-import { ScrollArea } from "../ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { Button } from "../ui/button";
@@ -25,8 +24,8 @@ export function CustomerList() {
     
     return (
         <aside className="w-80 border-r bg-muted/20 flex flex-col h-full">
-            <Tabs defaultValue="conversations" className="flex-1 flex flex-col">
-                 <div className="p-3 border-b">
+            <Tabs defaultValue="conversations" className="flex-1 flex flex-col min-h-0">
+                 <div className="p-3 border-b flex-shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
                             <Bot size={24} />
@@ -38,8 +37,8 @@ export function CustomerList() {
                     </div>
                 </div>
                 
-                <TabsContent value="conversations" className="flex-1 flex flex-col min-h-0">
-                    <ScrollArea className="flex-1">
+                <TabsContent value="conversations" className="flex-1 flex flex-col min-h-0 relative">
+                    <div className="absolute inset-0 overflow-y-auto">
                         <div className="p-2 space-y-1">
                         {sessions.map(session => {
                             const customer = customers.find(c => c.id === session.customerId);
@@ -72,7 +71,7 @@ export function CustomerList() {
                                             </p>
                                         </div>
                                     </button>
-                                    <div className="absolute top-1/2 right-2 -translate-y-1/2 opacity-0 group-hover:opacity-100">
+                                    <div className="absolute top-1/2 right-2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
                                          <AlertDialog>
                                             <AlertDialogTrigger asChild>
                                                 <Button 
@@ -103,7 +102,7 @@ export function CustomerList() {
                             )
                         })}
                         </div>
-                    </ScrollArea>
+                    </div>
                 </TabsContent>
 
                 <TabsContent value="archived" className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
@@ -112,7 +111,7 @@ export function CustomerList() {
                 </TabsContent>
             </Tabs>
             
-            <div className="p-2 border-t mt-auto">
+            <div className="p-2 border-t mt-auto flex-shrink-0">
                 <AgentProfile />
             </div>
         </aside>
