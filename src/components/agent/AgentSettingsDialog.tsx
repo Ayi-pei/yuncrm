@@ -13,7 +13,7 @@ import { Textarea } from "../ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import type { AgentSettings, QuickReply } from "@/lib/types";
-import { PlusCircle, Trash, KeyRound, Bell, Loader2, Edit, Save, ArrowUp, GripVertical } from "lucide-react";
+import { PlusCircle, Trash, KeyRound, Bell, Loader2, Edit, Save, ArrowUp } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { zhCN } from 'date-fns/locale';
 import { Switch } from "../ui/switch";
