@@ -20,7 +20,11 @@ interface ChatWindowProps {
     session: ChatSession;
 }
 
-const EMOJIS = ['😀', '😂', '😍', '🤔', '👍', '❤️', '🎉', '👋'];
+const EMOJIS = [
+    '😀', '😂', '😊', '😍', '🤔', '😢', '😠', '😮', 
+    '👍', '👎', '❤️', '💔', '🎉', '🔥', '🙏', '🙌', 
+    '👏', '💪', '💯', '✨', '✅', '❌', '❓', '💡'
+];
 
 export function ChatWindow({ session }: ChatWindowProps) {
     const { agent, customers, sendMessage, settings } = useAgentStore();
@@ -155,7 +159,7 @@ export function ChatWindow({ session }: ChatWindowProps) {
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-2">
-                                    <div className="grid grid-cols-4 gap-2">
+                                    <div className="grid grid-cols-6 gap-2">
                                         {EMOJIS.map(emoji => (
                                             <Button key={emoji} variant="ghost" size="icon" onClick={() => handleEmojiSelect(emoji)}>{emoji}</Button>
                                         ))}
