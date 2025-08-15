@@ -6,24 +6,32 @@ import type { ChatSession } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-import { Send, Sparkles, Loader2, User as UserIcon, Smile, Mic, Paperclip, Image as ImageIcon, Ban } from "lucide-react";
+import { Send, Sparkles, Loader2, User as UserIcon, Smile, Mic, Paperclip, Image as ImageIcon, Ban, Dot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAgentStore } from "@/lib/stores/agentStore";
 import { format } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { ScrollArea } from "../ui/scroll-area";
 import { redactPii } from "@/ai/flows/redact-pii";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { useToast } from "@/hooks/use-toast";
 
 interface ChatWindowProps {
     session: ChatSession;
 }
+
+const EMOJIS = ['😀', '😂', '😍', '🤔', '👍', '❤️', '🎉', '👋'];
 
 export function ChatWindow({ session }: ChatWindowProps) {
     const { agent, customers, sendMessage, settings } = useAgentStore();
     const customer = customers.find(c => c.id === session.customerId);
     const [message, setMessage] = useState("");
     const [isRedacting, setIsRedacting] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
 
     const isCustomerBlocked = customer?.ipAddress ? settings?.blockedIps.includes(customer.ipAddress) : false;
 
@@ -50,10 +58,39 @@ export function ChatWindow({ session }: ChatWindowProps) {
             setMessage(result.redactedMessage);
         } catch (error) {
             console.error("Failed to redact message:", error);
+            toast({ title: "处理失败", description: "无法处理您的消息。", variant: "destructive" });
         } finally {
             setIsRedacting(false);
         }
     };
+    
+    const handleEmojiSelect = (emoji: string) => {
+        setMessage(prev => prev + emoji);
+    }
+    
+    const handleAttachmentClick = (type: 'file' | 'image') => {
+        if (type === 'file') {
+            fileInputRef.current?.click();
+        } else {
+            imageInputRef.current?.click();
+        }
+    }
+    
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            toast({ title: "文件已选择", description: `已选择文件: ${file.name} (模拟上传)` });
+        }
+        e.target.value = "";
+    }
+    
+    const toggleRecording = () => {
+        setIsRecording(!isRecording);
+        toast({
+            title: isRecording ? "录音已停止" : "开始录音...",
+            description: "语音输入功能正在开发中。"
+        });
+    }
 
     if (!customer || !agent) return null;
 
@@ -111,18 +148,32 @@ export function ChatWindow({ session }: ChatWindowProps) {
                     )}
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                             <Button variant="ghost" size="icon" className="text-muted-foreground">
-                                <Smile />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-muted-foreground">
+                                        <Smile />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-2">
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {EMOJIS.map(emoji => (
+                                            <Button key={emoji} variant="ghost" size="icon" onClick={() => handleEmojiSelect(emoji)}>{emoji}</Button>
+                                        ))}
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                            <Button variant="ghost" size="icon" className={cn("text-muted-foreground", isRecording && "text-red-500 bg-red-500/10")} onClick={toggleRecording}>
                                 <Mic />
+                                {isRecording && <Dot className="absolute -top-1 -right-1 text-red-500 animate-ping" />}
                             </Button>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground">
+                             <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={() => handleAttachmentClick('file')}>
                                 <Paperclip />
                             </Button>
-                             <Button variant="ghost" size="icon" className="text-muted-foreground">
+                             <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={() => handleAttachmentClick('image')}>
                                 <ImageIcon />
                             </Button>
+                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                            <input type="file" accept="image/*" ref={imageInputRef} onChange={handleFileChange} className="hidden" />
                         </div>
                         <div className="relative">
                             <Textarea 
@@ -155,5 +206,3 @@ export function ChatWindow({ session }: ChatWindowProps) {
         </div>
     );
 }
-
-    
