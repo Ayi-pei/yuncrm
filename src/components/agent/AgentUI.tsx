@@ -5,7 +5,6 @@ import { useAgentStore } from "@/lib/stores/agentStore";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { CustomerList } from "./CustomerList";
 import { ChatWindow } from "./ChatWindow";
-import { CustomerDetails } from "./CustomerDetails";
 import { Skeleton } from "../ui/skeleton";
 import { MessageCircle } from "lucide-react";
 
@@ -30,10 +29,7 @@ export function AgentUI() {
         <div className="flex h-full">
             <CustomerList />
             {activeSession && activeCustomer ? (
-                <main className="flex flex-1">
-                    <ChatWindow session={activeSession} />
-                    <CustomerDetails customer={activeCustomer} />
-                </main>
+                <ChatWindow session={activeSession} customer={activeCustomer} />
             ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-center text-muted-foreground bg-muted/30">
                     <MessageCircle size={48} className="mb-4" />
@@ -63,11 +59,6 @@ function LoadingSkeleton() {
                     <Skeleton className="h-16 w-2/3" />
                 </div>
                 <div className="p-4 border-t"><Skeleton className="h-20 w-full" /></div>
-            </div>
-            <div className="w-80 border-l p-4 flex flex-col gap-4">
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-32 w-full" />
-                <Skeleton className="h-16 w-full" />
             </div>
         </div>
     )
