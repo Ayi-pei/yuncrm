@@ -1,10 +1,9 @@
-
 // Simulates a backend API, managing all data in-memory.
 import {
   AccessKey,
   Agent,
   AgentSettings,
-  AgentStatus,
+  UserStatus,
   Alias,
   ChatMessage,
   ChatSession,
@@ -12,6 +11,7 @@ import {
   QuickReply,
   User,
   UserRole,
+  AccessKeyStatus,
 } from "./types";
 import { ADMIN_KEY } from "./constants";
 
@@ -68,10 +68,6 @@ function createKey(data: { name: string; key_type: UserRole; notes?: string }): 
         createdAt: new Date().toISOString(),
     };
     keys[keyInfo.key] = keyInfo;
-
-    // We no longer automatically create an agent here.
-    // Agent creation should be a separate, deliberate action.
-    // A new agent key is just a key until it's bound to an agent.
     return keyInfo;
 }
 
@@ -114,6 +110,29 @@ function resolveShortLink(token: string): string | null {
     return null;
   }
   return item.shareId;
+}
+
+function renewKeyForUser(userId: string): KeyInfo | null {
+  // Find the old key
+  const oldKeyInfo = Object.values(keys).find(keyInfo => keyInfo.userId === userId);
+
+  if (!oldKeyInfo) {
+    return null;
+  }
+
+  // Create a new key
+  const newKeyInfo = createKey({ name: `续期-${oldKeyInfo.name}`, key_type: oldKeyInfo.key_type, notes: oldKeyInfo.notes });
+
+  // Bind the new key to the user
+  const bindSuccess = bindKeyToUser(userId, newKeyInfo.key);
+
+  if (!bindSuccess) {
+    // This should ideally not happen, but handle it in case it does
+    delete keys[newKeyInfo.key]; // Remove the newly created key if binding fails
+    return null;
+  }
+
+  return newKeyInfo;
 }
 
 // 6. Automatic Cleanup
@@ -330,19 +349,30 @@ export const mockApi = {
 
   async getAccessKeys(): Promise<AccessKey[]> {
     await delay(300);
-    return Object.values(keys).map(k => ({
-        id: k.key,
-        key: k.key,
-        name: k.name,
-        notes: k.notes,
-        key_type: k.key_type,
-        status: Date.now() > k.expireAt ? 'expired' : k.userId ? 'used' : 'active',
-        createdAt: k.createdAt,
-        expiresAt: new Date(k.expireAt).toISOString(),
-        userId: k.userId,
-        usageCount: k.userId ? 1 : 0,
-        maxUsage: 1,
-    })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return Object.values(keys).map(k => {
+        let status: AccessKeyStatus;
+        if (Date.now() > k.expireAt) {
+            status = 'expired';
+        } else if (k.userId) {
+            status = 'used';
+        } else {
+            status = 'active';
+        }
+
+        return {
+            id: k.key,
+            key: k.key,
+            name: k.name,
+            notes: k.notes,
+            key_type: k.key_type,
+            status: status,
+            createdAt: k.createdAt,
+            expiresAt: new Date(k.expireAt).toISOString(),
+            userId: k.userId,
+            usageCount: k.userId ? 1 : 0,
+            maxUsage: 1,
+        };
+    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
 
   async createAccessKey(data: { name: string; key_type: UserRole, notes?: string }): Promise<AccessKey> {
@@ -375,6 +405,15 @@ export const mockApi = {
         // 'suspended' is a client state, we don't store it. To "suspend", just delete the key.
         // For this mock, we'll just leave it as is. A real backend might toggle a flag.
     }
+    
+    let status: AccessKeyStatus;
+    if (Date.now() > keyInfo.expireAt) {
+        status = 'expired';
+    } else if (keyInfo.userId) {
+        status = 'used';
+    } else {
+        status = 'active';
+    }
 
     return {
         id: keyInfo.key,
@@ -382,7 +421,7 @@ export const mockApi = {
         name: keyInfo.name,
         notes: keyInfo.notes,
         key_type: keyInfo.key_type,
-        status: Date.now() > keyInfo.expireAt ? 'expired' : keyInfo.userId ? 'used' : 'active',
+        status: status,
         createdAt: keyInfo.createdAt,
         expiresAt: new Date(keyInfo.expireAt).toISOString(),
         userId: keyInfo.userId,
@@ -451,7 +490,7 @@ export const mockApi = {
     return newMessage;
   },
 
-  async updateAgentStatus(agentId: string, status: AgentStatus): Promise<Agent | null> {
+  async updateAgentStatus(agentId: string, status: UserStatus): Promise<Agent | null> {
     await delay(200);
     const agent = agents.find(a => a.id === agentId);
     if(agent) {
@@ -621,5 +660,23 @@ export const mockApi = {
       await delay(1000);
       const session = chatSessions.find(s => s.id === sessionId);
       return session || null;
-  }
+  },
+    async renewKeyForUser(userId: string): Promise<AccessKey | null> {
+        const newKeyInfo = renewKeyForUser(userId);
+        if (!newKeyInfo) {
+            return null;
+        }
+        return {
+            id: newKeyInfo.key,
+            key: newKeyInfo.key,
+            name: newKeyInfo.name,
+            notes: newKeyInfo.notes,
+            key_type: newKeyInfo.key_type,
+            status: 'active',
+            createdAt: newKeyInfo.createdAt,
+            expiresAt: new Date(newKeyInfo.expireAt).toISOString(),
+            usageCount: 0,
+            maxUsage: 1,
+        };
+    }
 };
