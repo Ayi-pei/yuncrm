@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
@@ -154,12 +155,15 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
                                 <Label htmlFor="welcome">欢迎消息</Label>
                                 <Textarea id="welcome" value={welcomeMessage} onChange={(e) => setWelcomeMessage(e.target.value)} placeholder="访客看到的第一条消息。" />
                             </div>
-                            <div className="space-y-2">
-                                <Label>快捷回复</Label>
+                            <div className="space-y-4">
+                                <div>
+                                    <Label>快捷回复</Label>
+                                    <p className="text-sm text-muted-foreground">输入您的常用语录，方便快速回复。</p>
+                                </div>
                                 <div className="space-y-2">
                                     {quickReplies.map(qr => (
                                         <div key={qr.id} className="flex items-center gap-2">
-                                            <Input placeholder="快捷指令 (例如 /hello)" value={qr.shortcut} onChange={e => updateQuickReply(qr.id, 'shortcut', e.target.value)}/>
+                                            <Input placeholder="自定义快捷指令" value={qr.shortcut} onChange={e => updateQuickReply(qr.id, 'shortcut', e.target.value)}/>
                                             <Input placeholder="消息" className="flex-1" value={qr.message} onChange={e => updateQuickReply(qr.id, 'message', e.target.value)} />
                                             <Button variant="ghost" size="icon" onClick={() => removeQuickReply(qr.id)}><Trash className="h-4 w-4 text-destructive"/></Button>
                                         </div>

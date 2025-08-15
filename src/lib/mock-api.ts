@@ -1,3 +1,4 @@
+
 // Simulates a backend API, managing all data in-memory.
 import {
   AccessKey,
@@ -170,8 +171,8 @@ let agentSettings: Record<string, AgentSettings> = {
     "agent-01": {
         welcomeMessage: "欢迎！今天有什么可以帮您的吗？",
         quickReplies: [
-            { id: "qr-1", shortcut: "/thanks", message: "不客气！还有其他可以帮助您的吗？" },
-            { id: "qr-2", shortcut: "/np", message: "没问题！" },
+            { id: "qr-1", shortcut: "thanks", message: "不客气！还有其他可以帮助您的吗？" },
+            { id: "qr-2", shortcut: "np", message: "没问题！" },
         ],
         blockedIps: [],
     },
