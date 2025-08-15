@@ -119,7 +119,7 @@ export function KeyManagementTable() {
                     </Badge>
                   </TableCell>
                    <TableCell>{key.usageCount} / {key.maxUsage || '∞'}</TableCell>
-                  <TableCell>{key.expiresAt ? format(parseISO(key.expiresAt), "PPP p", { locale: zhCN }) : "永不"}</TableCell>
+                  <TableCell>{key.expiresAt ? format(parseISO(key.expiresAt), "PPP HH:mm", { locale: zhCN }) : "永不"}</TableCell>
                   <TableCell>{format(parseISO(key.createdAt), "PPP", { locale: zhCN })}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -285,3 +285,5 @@ function KeyFormDialog({ isOpen, setIsOpen, editingKey, createKey, updateKey, to
         </Dialog>
     )
 }
+
+    
