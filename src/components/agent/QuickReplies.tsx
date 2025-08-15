@@ -21,21 +21,17 @@ export function QuickReplies() {
     }
 
     return (
-        <Card className="h-full flex flex-col">
-            <CardHeader>
-                <CardTitle className="text-base flex items-center justify-between">
-                    <span>快捷回复</span>
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 p-0">
+        <div className="h-full flex flex-col">
+           
+            <div className="flex-1 p-0">
                 <ScrollArea className="h-full">
-                    <div className="p-6 pt-0">
+                    <div className="space-y-2">
                         {quickReplies.length > 0 ? (
                             <div className="space-y-2">
                                 {quickReplies.map((reply) => (
                                     <div key={reply.id} className="p-3 bg-background rounded-md border text-sm group relative">
-                                        <p className="font-medium text-primary">{reply.shortcut}</p>
-                                        <p className="text-muted-foreground pr-8">{reply.message}</p>
+                                        <code className="font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded">{reply.shortcut}</code>
+                                        <p className="text-muted-foreground pr-8 mt-1">{reply.message}</p>
                                         <Button 
                                             variant="ghost" 
                                             size="icon" 
@@ -57,7 +53,9 @@ export function QuickReplies() {
                         )}
                     </div>
                 </ScrollArea>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }
+
+    

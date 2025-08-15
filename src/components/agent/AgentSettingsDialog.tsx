@@ -44,7 +44,7 @@ function SortableReplyItem({ id, qr, editingReplyId, updateQuickReply, setEditin
             </div>
             {editingReplyId === qr.id ? (
                 <>
-                    <Input placeholder="快捷指令 (例如 a)" value={qr.shortcut} onChange={e => updateQuickReply(qr.id, 'shortcut', e.target.value)} className="w-28"/>
+                    <Input placeholder="快捷指令" value={qr.shortcut} onChange={e => updateQuickReply(qr.id, 'shortcut', e.target.value)} className="w-28"/>
                     <Input placeholder="快捷回复内容" className="flex-1" value={qr.message} onChange={e => updateQuickReply(qr.id, 'message', e.target.value)} />
                     <Button variant="ghost" size="icon" onClick={() => setEditingReplyId(null)}><Save className="h-4 w-4 text-primary"/></Button>
                 </>
@@ -314,3 +314,5 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
         </Dialog>
     );
 }
+
+    

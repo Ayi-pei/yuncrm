@@ -166,7 +166,13 @@ export function ChatWindow({ session, customer }: ChatWindowProps) {
                              </Button>
                         </SheetTrigger>
                         <SheetContent className="w-[400px] sm:w-[540px] p-0 flex flex-col">
-                           <aside className="p-6 flex flex-col gap-6 h-full">
+                           <SheetHeader className="p-6 pb-0">
+                                <SheetTitle>客户详情</SheetTitle>
+                                <SheetDescription>
+                                    查看客户信息，使用快捷回复，或执行操作。
+                                </SheetDescription>
+                           </SheetHeader>
+                           <aside className="p-6 flex flex-col gap-6 h-full overflow-y-auto">
                                 {isArchived && (
                                     <div className="absolute inset-0 bg-background/80 z-10 flex flex-col items-center justify-center text-center p-4">
                                         <Archive className="h-10 w-10 text-muted-foreground mb-4" />
@@ -262,15 +268,15 @@ export function ChatWindow({ session, customer }: ChatWindowProps) {
                                     {msg.type === 'text' ? (
                                         <p className="text-sm">{msg.text}</p>
                                     ) : (
-                                        <div className="flex items-center gap-3">
-                                            <CircularProgress progress={msg.file.progress} />
+                                        <a href={(msg as FileChatMessage).file.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3">
+                                            <CircularProgress progress={(msg as FileChatMessage).file.progress} />
                                             <div>
-                                                <p className="text-sm font-medium break-all">{msg.file.name}</p>
+                                                <p className="text-sm font-medium break-all underline">{(msg as FileChatMessage).file.name}</p>
                                                 <p className={cn("text-xs", msg.sender === 'agent' ? 'text-primary-foreground/80' : 'text-muted-foreground')}>
-                                                    {formatFileSize(msg.file.size)}
+                                                    {formatFileSize((msg as FileChatMessage).file.size)}
                                                 </p>
                                             </div>
-                                        </div>
+                                        </a>
                                     )}
                                     <p className={cn("text-xs mt-1 text-right", msg.sender === 'agent' ? 'text-primary-foreground/70' : 'text-muted-foreground/70')}>
                                         {format(new Date(msg.timestamp), 'p', { locale: zhCN })}
@@ -357,3 +363,5 @@ export function ChatWindow({ session, customer }: ChatWindowProps) {
        </main>
     );
 }
+
+    
