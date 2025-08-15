@@ -51,7 +51,7 @@ export function CustomerList() {
                                     <button 
                                         onClick={() => setActiveSessionId(session.id)}
                                         className={cn(
-                                            "w-full text-left p-3 rounded-lg flex gap-3 items-start transition-colors pr-10",
+                                            "w-full text-left p-3 rounded-lg flex gap-3 items-start transition-colors",
                                             activeSessionId === session.id ? "bg-primary/10" : "hover:bg-muted/50"
                                         )}
                                     >
@@ -78,12 +78,11 @@ export function CustomerList() {
                                                 variant="ghost" 
                                                 size="icon" 
                                                 className="absolute top-1/2 right-2 -translate-y-1/2 h-7 w-7 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
-                                                onClick={(e) => e.stopPropagation()}
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </AlertDialogTrigger>
-                                        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                                        <AlertDialogContent>
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle>您确定要删除该客户吗？</AlertDialogTitle>
                                                 <AlertDialogDescription>
