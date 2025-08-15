@@ -46,7 +46,6 @@ function getAlignedExpireAt(now = new Date()): Date {
     expire.setHours(12, 0, 0, 0);
   } else {
     // 领取时间 < 12:00 -> 当天 24:00 过期（实际是当天的 24:00）
-    expire.setDate(expire.getDate());
     expire.setHours(24, 0, 0, 0);
   }
 
@@ -84,7 +83,7 @@ let accessKeys: AccessKey[] = [
     createdAt: new Date().toISOString(),
     expiresAt: getFutureDate(30),
     key_type: "agent",
-    lastUsedAt: new Date().toISOString(),
+    userId: "agent-01",
   },
   {
     id: "key-agent-02",
@@ -94,7 +93,7 @@ let accessKeys: AccessKey[] = [
     createdAt: new Date().toISOString(),
     expiresAt: getFutureDate(7),
     key_type: "agent",
-    lastUsedAt: new Date().toISOString(),
+    userId: "agent-02",
   },
   {
     id: "key-agent-03",
@@ -104,7 +103,7 @@ let accessKeys: AccessKey[] = [
     createdAt: new Date().toISOString(),
     expiresAt: new Date().toISOString(),
     key_type: "agent",
-    lastUsedAt: new Date().toISOString(),
+    userId: "agent-03",
   },
   {
     id: 'key-agent-04',
@@ -114,7 +113,7 @@ let accessKeys: AccessKey[] = [
     createdAt: new Date().toISOString(),
     expiresAt: getFutureDate(15),
     key_type: "agent",
-    lastUsedAt: null,
+    userId: undefined,
   },
 ];
 
@@ -124,7 +123,6 @@ let agents: Agent[] = [
     name: "小爱",
     avatar: "https://i.pravatar.cc/150?u=alice",
     status: "online",
-    accessKeyId: "key-agent-01",
     lastActiveAt: new Date().toISOString(),
     role: "agent",
   },
@@ -133,7 +131,6 @@ let agents: Agent[] = [
     name: "小博",
     avatar: "https://i.pravatar.cc/150?u=bob",
     status: "busy",
-    accessKeyId: "key-agent-02",
     lastActiveAt: new Date().toISOString(),
     role: "agent",
   },
@@ -142,7 +139,6 @@ let agents: Agent[] = [
     name: "小驰",
     avatar: "https://i.pravatar.cc/150?u=charlie",
     status: "offline",
-    accessKeyId: "key-agent-03",
     lastActiveAt: new Date(Date.now() - 86400000).toISOString(),
     role: "agent",
   },
@@ -245,6 +241,23 @@ const generateChineseName = () => {
     return name;
 };
 
+// --- Helper for new key logic ---
+function getFixedExpireAt(): Date {
+    const now = new Date();
+    const expiresAt = new Date();
+    const hours = now.getHours();
+
+    if (hours >= 0 && hours < 12) {
+        // 0-12点领取 -> 当天12点过期
+        expiresAt.setHours(12, 0, 0, 0);
+    } else {
+        // 12-24点领取 -> 第二天0点过期
+        expiresAt.setDate(expiresAt.getDate() + 1);
+        expiresAt.setHours(0, 0, 0, 0);
+    }
+    return expiresAt;
+}
+
 
 // --- API FUNCTIONS ---
 
@@ -252,27 +265,23 @@ export const mockApi = {
   async loginWithKey(key: string): Promise<User | null> {
     await delay(500);
     const accessKey = accessKeys.find((k) => k.key === key && k.status === 'active');
-    if (!accessKey) {
-      return null;
-    }
+    
+    if (!accessKey) return null;
     
     // Check for expiration
     if (accessKey.expiresAt && new Date(accessKey.expiresAt) < new Date()) {
-      accessKey.status = 'suspended'; // Mark as suspended if expired
+      accessKey.status = 'suspended'; 
       return null;
     }
-
-    accessKey.lastUsedAt = new Date().toISOString();
 
     if (accessKey.key_type === 'admin') {
       return { id: 'admin-user', role: 'admin', name: '管理员', status: 'online', lastActiveAt: new Date().toISOString() };
     }
 
-    const agent = agents.find((a) => a.accessKeyId === accessKey.id);
+    const agent = agents.find((a) => a.id === accessKey.userId);
     if (agent) {
        agent.status = 'online';
        agent.lastActiveAt = new Date().toISOString();
-       // Return agent ID as shareId
        return { id: agent.id, role: 'agent', name: agent.name, avatar: agent.avatar, shareId: agent.id, status: agent.status, lastActiveAt: agent.lastActiveAt };
     }
 
@@ -291,8 +300,7 @@ export const mockApi = {
 
   async getAccessKeys(): Promise<AccessKey[]> {
     await delay(300);
-    // Add usageCount for demonstration
-    return [...accessKeys].map(k => ({...k, usageCount: k.lastUsedAt ? 1 : 0, maxUsage: 1 })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return [...accessKeys].map(k => ({...k, usageCount: k.userId ? 1 : 0, maxUsage: 1 })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
 
   async createAccessKey(data: { name: string; key_type: UserRole, notes?: string }): Promise<AccessKey> {
@@ -306,23 +314,24 @@ export const mockApi = {
       notes: data.notes,
       status: "active",
       createdAt: new Date().toISOString(),
-      lastUsedAt: null,
-      expiresAt: data.key_type === 'admin' ? getAlignedExpireAt().toISOString() : getFutureDate(30),
+      expiresAt: getFixedExpireAt().toISOString(),
+      userId: undefined,
     };
     accessKeys.push(newKey);
 
-    if (newKey.key_type === 'agent') {
+    if (newKey.key_type === 'agent' && !agents.some(a => a.name === newKey.name)) {
         const agentId = generateId('agent');
         const newAgent: Agent = {
             id: agentId,
             name: newKey.name,
             avatar: `https://i.pravatar.cc/150?u=${agentId}`,
             status: "offline",
-            accessKeyId: newKey.id,
             role: 'agent',
             lastActiveAt: new Date().toISOString(),
         }
         agents.push(newAgent);
+        // Bind the new key to this new agent
+        newKey.userId = agentId;
         agentSettings[newAgent.id] = { welcomeMessages: ["欢迎!"], quickReplies: [], blockedIps: [] };
     }
 
@@ -336,7 +345,7 @@ export const mockApi = {
     
     accessKeys[keyIndex] = { ...accessKeys[keyIndex], ...updates };
     
-    const agent = agents.find(a => a.accessKeyId === id);
+    const agent = agents.find(a => a.id === accessKeys[keyIndex].userId);
     if(agent && updates.name) {
         agent.name = updates.name;
     }
@@ -350,13 +359,13 @@ export const mockApi = {
   async deleteAccessKey(id: string): Promise<boolean> {
     await delay(500);
     const initialLength = accessKeys.length;
+    const keyToDelete = accessKeys.find(k => k.id === id);
+    if (!keyToDelete) return false;
+    
+    // If key is bound to an agent, we might want to handle that
+    // For now, just delete the key. The agent will lose access.
     accessKeys = accessKeys.filter(k => k.id !== id);
-    const agentToDelete = agents.find(a => a.accessKeyId === id);
-    if(agentToDelete) {
-        agents = agents.filter(a => a.id !== agentToDelete.id);
-        chatSessions = chatSessions.filter(s => s.agentId !== agentToDelete.id);
-        delete agentSettings[agentToDelete.id];
-    }
+    
     return accessKeys.length < initialLength;
   },
 
@@ -369,7 +378,7 @@ export const mockApi = {
         role: a.role,
         status: a.status,
         lastActiveAt: a.lastActiveAt,
-        accessKey: accessKeys.find(k => k.id === a.accessKeyId)?.key
+        accessKey: accessKeys.find(k => k.userId === a.id)?.key
     })).sort((a,b) => new Date(b.lastActiveAt).getTime() - new Date(a.lastActiveAt).getTime());
   },
 
@@ -383,7 +392,7 @@ export const mockApi = {
     const customerIds = sessions.map(s => s.customerId);
     const relevantCustomers = customers.filter(c => customerIds.includes(c.id));
     const settings = agentSettings[agentId];
-    const key = accessKeys.find(k => k.id === agent.accessKeyId) || null;
+    const key = accessKeys.find(k => k.userId === agent.id) || null;
 
     return { agent, sessions, customers: relevantCustomers, settings, key };
   },
@@ -440,54 +449,36 @@ export const mockApi = {
   },
 
   async extendAgentKey(agentId: string, newKeyString: string): Promise<AccessKey | null> {
-      await delay(600);
-      const agent = agents.find(a => a.id === agentId);
-      if (!agent) {
-          throw new Error("坐席不存在。");
-      }
+    await delay(600);
+    const agent = agents.find(a => a.id === agentId);
+    if (!agent) throw new Error("坐席不存在。");
 
-      const currentKey = accessKeys.find(k => k.id === agent.accessKeyId);
-      if (!currentKey) {
-          throw new Error("当前坐席密钥不存在。");
-      }
+    const newKey = accessKeys.find(k => k.key === newKeyString);
+    if (!newKey) throw new Error("提供的新密钥无效。");
+    if (newKey.key_type !== 'agent') throw new Error("该密钥非坐席密钥");
+    if (newKey.status !== 'active') throw new Error("该密钥非激活状态");
+    if (newKey.userId) throw new Error("该密钥已被其他坐席绑定");
+    if (newKey.expiresAt && new Date(newKey.expiresAt) < new Date()) {
+        throw new Error("该密钥已过期。");
+    }
 
-      const newKey = accessKeys.find(k => k.key === newKeyString);
-      if (!newKey) {
-          throw new Error("提供的新密钥无效。");
+    // Unbind and remove the old key for this agent
+    const oldKeyIndex = accessKeys.findIndex(k => k.userId === agentId);
+    if (oldKeyIndex !== -1) {
+        accessKeys.splice(oldKeyIndex, 1);
+    }
+    
+    // Bind the new key
+    newKey.userId = agentId;
+    
+    // Invalidate aliases associated with this agent
+    for (const [token, alias] of aliasMap.entries()) {
+      if(alias.shareId === agentId) {
+        aliasMap.delete(token);
       }
-      if (newKey.key_type !== 'agent' || newKey.lastUsedAt !== null) {
-          throw new Error("该密钥不可用（可能已被使用、暂停或角色不符）。");
-      }
-      if (newKey.status !== 'active') {
-           throw new Error("该密钥非激活状态");
-      }
-      if (!newKey.expiresAt) {
-          throw new Error("该密钥没有设置到期时间。");
-      }
+    }
 
-      const now = new Date();
-      const newKeyExpiresAt = new Date(newKey.expiresAt);
-      if (newKeyExpiresAt < now) {
-          throw new Error("该密钥已过期。");
-      }
-      
-      const timeToAdd = differenceInMilliseconds(newKeyExpiresAt, now);
-      
-      const currentKeyExpiresAt = currentKey.expiresAt ? new Date(currentKey.expiresAt) : now;
-      const newExpiryDate = add(currentKeyExpiresAt < now ? now : currentKeyExpiresAt, { milliseconds: timeToAdd });
-      
-      currentKey.expiresAt = newExpiryDate.toISOString();
-      newKey.status = 'used';
-      newKey.lastUsedAt = now.toISOString();
-
-      // Invalidate aliases associated with this agent
-      for (const [token, alias] of aliasMap.entries()) {
-        if(alias.shareId === agentId) {
-          aliasMap.delete(token);
-        }
-      }
-
-      return currentKey;
+    return newKey;
   },
   
   async deleteCustomer(customerId: string): Promise<boolean> {
@@ -505,11 +496,9 @@ export const mockApi = {
     const agent = agents.find(a => a.id === agentId);
     if (!agent) return null;
     
-    // Check for an existing, unexpired alias for this agent
-    for(const alias of aliasMap.values()){
-      if(alias.shareId === agentId && new Date(alias.expireAt) > new Date()){
-        return alias;
-      }
+    const existingAlias = Array.from(aliasMap.values()).find(a => a.shareId === agentId && new Date(a.expireAt) > new Date());
+    if (existingAlias) {
+      return existingAlias;
     }
 
     const shareId = agent.id;
@@ -538,7 +527,7 @@ export const mockApi = {
       const agent = agents.find(a => a.id === agentId);
       if(!agent) return null; 
       
-      const key = accessKeys.find(k => k.id === agent.accessKeyId);
+      const key = accessKeys.find(k => k.userId === agent.id);
       if (!key || key.status !== 'active' || (key.expiresAt && new Date(key.expiresAt) < new Date())) {
           return null; 
       }

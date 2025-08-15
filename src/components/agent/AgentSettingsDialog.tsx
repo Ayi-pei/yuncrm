@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import type { AgentSettings, QuickReply } from "@/lib/types";
 import { PlusCircle, Trash, KeyRound, Bell, Loader2, Edit, Save, ArrowUp } from "lucide-react";
-import { formatDistanceToNow, parseISO } from "date-fns";
+import { format, formatDistanceToNow, parseISO } from "date-fns";
 import { zhCN } from 'date-fns/locale';
 import { Switch } from "../ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
@@ -64,7 +64,7 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
             if (expiresIn > 0 && expiresIn < oneHour) {
                 toast({
                     title: "密钥即将到期提醒",
-                    description: `您的坐席密钥将在大约一小时内到期。请及时延续。`,
+                    description: `您的坐席密钥将在大约一小时内到期。请及时更换。`,
                 });
             }
         };
@@ -145,15 +145,15 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
         const success = await extendKey(agent.id, newKey);
         if(success) {
             toast({
-                title: "密钥已延续",
-                description: "坐席位有效期已成功延长。旧的分享链接已失效，请重新生成。",
+                title: "密钥已更换",
+                description: "坐席已成功绑定新密钥。旧分享链接已失效，请重新生成。",
             });
             invalidateAliases(); // This will trigger the ShareDialog to refetch a new URL
             setNewKey("");
         } else {
              toast({
-                title: "延续失败",
-                description: error || "无法使用该密钥。请检查密钥是否正确、未使用且为智能体角色。",
+                title: "更换失败",
+                description: error || "无法使用该密钥。请检查密钥是否正确、未绑定且为坐席角色。",
                 variant: "destructive"
             })
         }
@@ -181,7 +181,7 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
                     <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="profile">个人资料</TabsTrigger>
                         <TabsTrigger value="chat">聊天设置</TabsTrigger>
-                        <TabsTrigger value="key">密钥信息</TabsTrigger>
+                        <TabsTrigger value="key">密钥管理</TabsTrigger>
                     </TabsList>
                     <TabsContent value="profile" className="p-1">
                         <div className="space-y-4 py-4">
@@ -270,11 +270,15 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
                                 <AlertDescription>
                                     <div className="mt-2 space-y-2 text-sm">
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">坐席位</span>
+                                            <span className="text-muted-foreground">绑定坐席</span>
                                             <span>{agent.name}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-muted-foreground">剩余时间</span>
+                                            <span className="text-muted-foreground">当前密钥</span>
+                                            <code className="text-xs">{key?.key}</code>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">到期时间</span>
                                             <span className="font-semibold">{getRemainingTime()}</span>
                                         </div>
                                     </div>
@@ -282,8 +286,8 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
                             </Alert>
                             
                              <div className="space-y-2">
-                                <Label htmlFor="extend-key">延续</Label>
-                                <p className="text-sm text-muted-foreground">粘贴其它未使用过的密钥，以支持当前坐席位的使用。</p>
+                                <Label htmlFor="extend-key">更换绑定密钥</Label>
+                                <p className="text-sm text-muted-foreground">粘贴一个新的、未绑定的坐席密钥来替换当前密钥，以继续使用坐席服务。旧密钥将会失效。</p>
                                 <div className="flex gap-2">
                                     <Input 
                                         id="extend-key" 
@@ -294,7 +298,7 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
                                     />
                                     <Button onClick={handleExtendKey} disabled={isExtendingKey || !newKey}>
                                         {isExtendingKey && <Loader2 className="animate-spin" />}
-                                        延续
+                                        更换密钥
                                     </Button>
                                 </div>
                             </div>

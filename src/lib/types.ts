@@ -29,7 +29,7 @@ export interface AccessKey {
     maxUsage?: number;
     expiresAt: string | null; 
     createdAt: string;
-    lastUsedAt?: string | null;
+    userId?: string; // Which user this key is bound to
 }
 
 
@@ -98,7 +98,7 @@ export interface AgentSettings {
 
 
 export interface Agent extends User {
-    accessKeyId: string;
+    // No longer needs accessKeyId, as keys are bound via userId
 }
 
 export type Alias = {
