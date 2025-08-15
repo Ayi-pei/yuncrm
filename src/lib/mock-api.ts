@@ -17,6 +17,7 @@ import { add, differenceInMilliseconds } from 'date-fns';
 
 
 const getFutureDate = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+const generateRandomId = (length: number) => Math.random().toString(36).slice(2, 2 + length);
 
 
 // --- IN-MEMORY DATABASE ---
@@ -79,7 +80,7 @@ let agents: Agent[] = [
     name: "小爱",
     avatar: "https://i.pravatar.cc/150?u=alice",
     status: "online",
-    shareId: "chat-with-alice",
+    shareId: generateRandomId(5),
     accessKeyId: "key-agent-01",
     lastActiveAt: new Date().toISOString(),
     role: "agent",
@@ -89,7 +90,7 @@ let agents: Agent[] = [
     name: "小博",
     avatar: "https://i.pravatar.cc/150?u=bob",
     status: "busy",
-    shareId: "talk-to-bob",
+    shareId: generateRandomId(5),
     accessKeyId: "key-agent-02",
     lastActiveAt: new Date().toISOString(),
     role: "agent",
@@ -99,7 +100,7 @@ let agents: Agent[] = [
     name: "小驰",
     avatar: "https://i.pravatar.cc/150?u=charlie",
     status: "offline",
-    shareId: "help-from-charlie",
+    shareId: generateRandomId(5),
     accessKeyId: "key-agent-03",
     lastActiveAt: new Date(Date.now() - 86400000).toISOString(),
     role: "agent",
@@ -274,7 +275,7 @@ export const mockApi = {
             name: newKey.name,
             avatar: `https://i.pravatar.cc/150?u=${agentId}`,
             status: "offline",
-            shareId: `chat-with-${newKey.name.toLowerCase().replace(/\s/g, "-")}-${generateId('')}`,
+            shareId: generateRandomId(5),
             accessKeyId: newKey.id,
             role: 'agent',
             lastActiveAt: new Date().toISOString(),
@@ -345,7 +346,7 @@ export const mockApi = {
     return { agent, sessions, customers: relevantCustomers, settings, key };
   },
 
-  async sendMessage(sessionId: string, message: ChatMessage): Promise<ChatMessage> {
+  async sendMessage(sessionId: string, message: Omit<ChatMessage, 'id'>): Promise<ChatMessage> {
     await delay(250);
     const session = chatSessions.find(s => s.id === sessionId);
     if (!session) throw new Error("Session not found");
@@ -500,3 +501,5 @@ export const mockApi = {
       return session || null;
   }
 };
+
+    
