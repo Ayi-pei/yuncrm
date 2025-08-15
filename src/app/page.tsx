@@ -18,9 +18,6 @@ export default function LoginPage() {
             </p>
         </div>
         <LoginForm />
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          使用 <code className="font-mono p-1 bg-muted rounded-sm">ADMIN-SUPER-SECRET</code> 获取管理员权限。
-        </p>
       </div>
     </main>
   );
