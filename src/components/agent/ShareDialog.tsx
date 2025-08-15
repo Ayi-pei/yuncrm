@@ -6,22 +6,29 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Copy, Download, Loader2 } from "lucide-react";
+import { Copy, Download, Loader2, Image as ImageIcon, User, Code, Headset } from "lucide-react";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useToast } from "@/hooks/use-toast";
-import QRCode from "qrcode.react";
+import QRCode, { QRCodeProps } from "qrcode.react";
 import { mockApi } from "@/lib/mock-api";
+import { SegmentedControl } from "../shared/SegmentedControl";
+import { useAgentStore } from "@/lib/stores/agentStore";
 
 interface ShareDialogProps {
     isOpen: boolean;
     setIsOpen: (open: boolean) => void;
 }
 
+const APP_ICON_SVG_DATA_URL = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWhlYWRzZXQiPjxwYXRoIGQ9Ik0xOCAxN2ExIDAgMCAxLSAxIDEgNiA2IDAgMCAxLTYgNnYxYTEgMSAwIDAgMSA1IDIuNUE4LjUgOC41IDAgMCAwIDE4IDE3WiIvPjxwYXRoIGQ9Ik0xOCAxN2ExIDAgMCAxLSAxIDEgNiA2IDAgMCAxLTYgNnYxYTEgMSAwIDAgMSAxIDAgNCA0IDAgMCAwIDQtNEgxN2ExIDEgMCAwIDEgMS0xWiIvPjxwYXRoIGQ9Im0xNSA1IgMiAyLTMgMy0yLTJ6bS0zIDRMNyAxNWw1IDUiLz48cGF0aCBkPSJNMy41IDIwLjVDMi42IDIwLjUgMiAxOS45IDIgMTl2LTZzMC00IDQgNGwwIDJjMCAxLjEgMCAxLjEtMSAxLjEtMS4xIDAtMS4xIDAtMS4xLTEuMVoiLz48L3N2Zz4=";
+
 export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
     const { user } = useAuthStore();
+    const { agent } = useAgentStore();
     const { toast } = useToast();
     const [shareUrl, setShareUrl] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [qrStyle, setQrStyle] = useState<"none" | "icon" | "avatar">("none");
+    const [qrImageSrc, setQrImageSrc] = useState<string | null>(null);
 
     useEffect(() => {
         const generateUrl = async () => {
@@ -52,6 +59,18 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
             setShareUrl("");
         }
     }, [user, isOpen, toast]);
+
+    useEffect(() => {
+        if (qrStyle === 'none') {
+            setQrImageSrc(null);
+        } else if (qrStyle === 'icon') {
+            setQrImageSrc(APP_ICON_SVG_DATA_URL);
+        } else if (qrStyle === 'avatar' && agent?.avatar) {
+            setQrImageSrc(agent.avatar);
+        } else {
+            setQrImageSrc(null);
+        }
+    }, [qrStyle, agent]);
     
     const handleCopy = () => {
         if (!shareUrl) return;
@@ -67,13 +86,29 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
             .replace("image/png", "image/octet-stream");
           let downloadLink = document.createElement("a");
           downloadLink.href = pngUrl;
-          downloadLink.download = `agentverse-share.png`;
+          downloadLink.download = `agentverse-share-qr.png`;
           document.body.appendChild(downloadLink);
           downloadLink.click();
           document.body.removeChild(downloadLink);
           toast({ title: "已下载", description: "二维码已保存为PNG图片。" });
         }
       };
+    
+    const qrCodeProps: QRCodeProps = {
+        id: "qr-code-canvas",
+        value: shareUrl,
+        size: 192,
+        level: "H",
+        includeMargin: true,
+        ...(qrImageSrc && {
+            imageSettings: {
+                src: qrImageSrc,
+                height: 35,
+                width: 35,
+                excavate: true,
+            },
+        }),
+    };
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -91,9 +126,19 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
                                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                             </div>
                         ) : (
-                            <QRCode id="qr-code-canvas" value={shareUrl} size={192} level={"H"} includeMargin={true} />
+                            <QRCode {...qrCodeProps} />
                         )}
                     </div>
+                     <SegmentedControl
+                        value={qrStyle}
+                        onValueChange={(val) => setQrStyle(val as any)}
+                        options={[
+                            { value: "none", label: "标准", icon: Code },
+                            { value: "icon", label: "图标", icon: Headset },
+                            { value: "avatar", label: "头像", icon: User, disabled: !agent?.avatar },
+                        ]}
+                    />
+
                     <div className="w-full flex items-center gap-2">
                         <Input value={shareUrl} placeholder="正在生成链接..." readOnly className="text-sm" />
                         <Button variant="outline" size="icon" onClick={handleCopy} disabled={!shareUrl}>
