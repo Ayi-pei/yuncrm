@@ -56,8 +56,10 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   },
   createKey: async (data) => {
     try {
-        const newKey = await mockApi.createAccessKey(data);
-        set(state => ({ keys: [...state.keys, newKey].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) }));
+        const newKey = await mockApi.createAccessKey(data as any);
+        if (newKey) {
+            set(state => ({ keys: [...state.keys, newKey].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) }));
+        }
         return newKey;
     } catch (e) {
         set({ error: e instanceof Error ? e.message : "Failed to create key" });
