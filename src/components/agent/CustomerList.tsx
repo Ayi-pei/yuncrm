@@ -71,15 +71,20 @@ export function CustomerList() {
                                             </p>
                                         </div>
                                     </button>
-                                    <div className="absolute top-0 right-2 h-full flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                     <div className="absolute top-1/2 -translate-y-1/2 right-2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                                          <AlertDialog>
                                             <AlertDialogTrigger asChild>
                                                 <Button 
                                                     variant="ghost" 
                                                     size="icon" 
-                                                    className="h-7 w-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                                    className={cn(
+                                                        "h-8 w-8 text-muted-foreground rounded-full relative overflow-hidden",
+                                                        "bg-no-repeat bg-[length:200%_100%] bg-[100%_0]",
+                                                        "hover:text-white transition-all duration-300",
+                                                        "hover:bg-[0%_0%] hover:bg-destructive/80"
+                                                      )}
                                                 >
-                                                    <Trash2 className="h-4 w-4" />
+                                                    <Trash2 className="h-5 w-5" />
                                                 </Button>
                                             </AlertDialogTrigger>
                                             <AlertDialogContent>
