@@ -62,15 +62,15 @@ export function AgentManagementTable() {
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage src={agent.avatarUrl} alt={agent.name} />
+                      <AvatarImage src={agent.avatar} alt={agent.name} />
                       <AvatarFallback>{agent.name[0]}</AvatarFallback>
                     </Avatar>
                     <span className="font-medium">{agent.name}</span>
                   </div>
                 </TableCell>
                 <TableCell>
-                    <Badge variant="outline" style={{ borderColor: agent.role?.color, color: agent.role?.color }}>
-                      {agent.role?.displayName}
+                    <Badge variant={agent.role === 'admin' ? 'destructive' : 'secondary'} className="capitalize">
+                      {agent.role}
                     </Badge>
                 </TableCell>
                 <TableCell>
