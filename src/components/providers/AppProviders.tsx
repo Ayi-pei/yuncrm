@@ -23,7 +23,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     const isAuthRoute = pathname === "/";
     const isAdminRoute = pathname.startsWith(protectedRoutes.admin);
     const isAgentRoute = pathname.startsWith(protectedRoutes.agent);
-    const isChatRoute = pathname.startsWith("/chat");
+    const isChatRoute = pathname.startsWith("/chat") || pathname.startsWith("/noiod") || pathname.startsWith("/naoiod");
 
     if (isChatRoute) {
       setIsChecking(false);
