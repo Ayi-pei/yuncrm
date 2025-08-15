@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { LogOut, Settings, Share2, Wifi, Bell, Moon } from "lucide-react";
 import { AgentStatus } from "@/lib/types";
-import { Badge } from "../ui/badge";
 import { AgentSettingsDialog } from "./AgentSettingsDialog";
 import { useState } from "react";
 import { ShareDialog } from "./ShareDialog";
@@ -23,10 +22,10 @@ export function AgentProfile() {
         updateStatus(agent.id, status as AgentStatus);
     };
 
-    const getStatusVariant = (status: AgentStatus) => {
+    const getStatusClass = (status: AgentStatus) => {
         switch(status) {
-            case 'online': return 'text-green-500';
-            case 'busy': return 'text-orange-500';
+            case 'online': return 'bg-green-500';
+            case 'busy': return 'bg-orange-500';
             case 'offline': return 'text-gray-500';
         }
     }
@@ -49,7 +48,7 @@ export function AgentProfile() {
                                 <AvatarImage src={agent.avatar} />
                                 <AvatarFallback>{agent.name[0]}</AvatarFallback>
                             </Avatar>
-                            <span className={`absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full border-2 border-muted ${getStatusVariant(agent.status).replace('text-', 'bg-')}`} />
+                            <span className={`absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full border-2 border-background ${getStatusClass(agent.status)}`} />
                         </div>
                         <div className="flex-1 overflow-hidden">
                             <p className="font-semibold truncate">{agent.name}</p>
@@ -58,7 +57,7 @@ export function AgentProfile() {
                     </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-64" side="top" align="start">
-                    <DropdownMenuLabel>状态</DropdownMenuLabel>
+                    <DropdownMenuLabel>我的状态</DropdownMenuLabel>
                     <DropdownMenuRadioGroup value={agent.status} onValueChange={handleStatusChange}>
                         <DropdownMenuRadioItem value="online"><Wifi className="mr-2 h-4 w-4 text-green-500" />在线</DropdownMenuRadioItem>
                         <DropdownMenuRadioItem value="busy"><Bell className="mr-2 h-4 w-4 text-orange-500" />忙碌</DropdownMenuRadioItem>

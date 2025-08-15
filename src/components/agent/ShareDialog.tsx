@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Copy } from "lucide-react";
+import { Copy, Download } from "lucide-react";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useToast } from "@/hooks/use-toast";
 import QRCode from "qrcode.react";
@@ -20,37 +20,64 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
     const [shareUrl, setShareUrl] = useState("");
 
     useEffect(() => {
-        if (user?.shareId && typeof window !== "undefined") {
+        if (isOpen && user?.shareId && typeof window !== "undefined") {
             const url = `${window.location.origin}/chat/${user.shareId}`;
             setShareUrl(url);
         }
     }, [user, isOpen]);
     
     const handleCopy = () => {
+        if (!shareUrl) return;
         navigator.clipboard.writeText(shareUrl);
         toast({ title: "已复制！", description: "分享链接已复制到剪贴板。" });
     }
+
+    const handleDownloadQR = () => {
+        const canvas = document.getElementById('qr-code-canvas') as HTMLCanvasElement;
+        if (canvas) {
+          const pngUrl = canvas
+            .toDataURL("image/png")
+            .replace("image/png", "image/octet-stream");
+          let downloadLink = document.createElement("a");
+          downloadLink.href = pngUrl;
+          downloadLink.download = `agentverse-share-${user?.shareId}.png`;
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+          toast({ title: "已下载", description: "二维码已保存为PNG图片。" });
+        }
+      };
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>分享聊天链接</DialogTitle>
+                    <DialogTitle>分享您的聊天链接</DialogTitle>
                     <DialogDescription>
-                        与访客分享此链接以开始与您的聊天会话。
+                        与访客分享此唯一链接或二维码，即可开始与您的专属聊天会话。
                     </DialogDescription>
                 </DialogHeader>
-                <div className="flex flex-col items-center gap-6 py-4">
-                    <div className="p-4 bg-white rounded-lg">
-                        <QRCode value={shareUrl} size={192} />
+                <div className="flex flex-col items-center gap-6 pt-4">
+                    <div className="p-4 bg-white rounded-lg border">
+                        {shareUrl ? (
+                            <QRCode id="qr-code-canvas" value={shareUrl} size={192} level={"H"} includeMargin={true} />
+                        ) : (
+                            <div className="h-[208px] w-[208px] bg-gray-200 animate-pulse rounded-md" />
+                        )}
                     </div>
                     <div className="w-full flex items-center gap-2">
-                        <Input value={shareUrl} readOnly />
-                        <Button variant="outline" size="icon" onClick={handleCopy}>
+                        <Input value={shareUrl} placeholder="正在生成链接..." readOnly className="text-sm" />
+                        <Button variant="outline" size="icon" onClick={handleCopy} disabled={!shareUrl}>
                             <Copy className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
+                <DialogFooter className="sm:justify-center">
+                    <Button onClick={handleDownloadQR} disabled={!shareUrl}>
+                        <Download className="mr-2 h-4 w-4"/>
+                        下载二维码
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
