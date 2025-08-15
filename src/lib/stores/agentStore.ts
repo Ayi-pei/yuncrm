@@ -131,6 +131,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
             set({ key: updatedKey, isExtendingKey: false, shouldInvalidateAliases: true });
             return true;
         }
+        set({ isExtendingKey: false });
         return false;
     } catch (e) {
         set({ error: e instanceof Error ? e.message : "Failed to extend key", isExtendingKey: false });

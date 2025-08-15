@@ -29,9 +29,9 @@ const nanoid = (size = 16) => {
 
 interface KeyInfo {
   key: string;
-  name: string;
+  name: string; // This is the descriptive name/remark for the key.
   notes?: string;
-  key_type: AccessKeyType;
+  key_type: UserRole;
   createdAt: string;
   userId?: string;
   expireAt: number; // timestamp
@@ -69,41 +69,25 @@ function createKey(data: { name: string; key_type: UserRole; notes?: string }): 
     };
     keys[keyInfo.key] = keyInfo;
 
-    // Create a corresponding agent if it's an agent key and doesn't exist.
-    if (keyInfo.key_type === 'agent' && !agents.some(a => a.name === keyInfo.name)) {
-        const agentId = `agent-${nanoid(8)}`;
-        const newAgent: Agent = {
-            id: agentId,
-            name: keyInfo.name,
-            avatar: `https://i.pravatar.cc/150?u=${agentId}`,
-            status: "offline",
-            role: 'agent',
-            lastActiveAt: new Date().toISOString(),
-        };
-        agents.push(newAgent);
-        agentSettings[newAgent.id] = { welcomeMessages: ["欢迎!"], quickReplies: [], blockedIps: [] };
-    }
-
+    // We no longer automatically create an agent here.
+    // Agent creation should be a separate, deliberate action.
+    // A new agent key is just a key until it's bound to an agent.
     return keyInfo;
 }
 
 // 3. Key Binding Logic
 function bindKeyToUser(userId: string, key: string): boolean {
   const keyInfo = keys[key];
-  if (!keyInfo) return false;
-  if (Date.now() > keyInfo.expireAt) return false;
+  if (!keyInfo) return false; // Key does not exist
+  if (Date.now() > keyInfo.expireAt) return false; // Key is expired
+  if (keyInfo.userId) return false; // Key is already used/bound
+  if (keyInfo.key_type !== 'agent') return false; // Only agent keys can be bound this way
 
   // Unbind any old key associated with this user
   for (const k in keys) {
     if (keys[k].userId === userId) {
       delete keys[k]; // Old key is invalidated
     }
-  }
-  
-  // Unbind any user associated with this new key (shouldn't happen with current logic, but safe)
-  if(keyInfo.userId && keyInfo.userId !== userId) {
-      // This key is already bound to another user. Cannot rebind.
-      return false;
   }
 
   // Bind the new key
@@ -187,9 +171,9 @@ let agents: Agent[] = [
     role: "agent",
   },
 ];
-// Pre-bind some keys for initial setup
-bindKeyToUser('agent-01', createKey({ name: '小爱', key_type: 'agent' }).key);
-bindKeyToUser('agent-02', createKey({ name: '小博', key_type: 'agent' }).key);
+// Pre-bind some keys for initial setup for demo purposes
+bindKeyToUser('agent-01', createKey({ name: '小爱-初始密钥', key_type: 'agent' }).key);
+bindKeyToUser('agent-02', createKey({ name: '小博-初始密钥', key_type: 'agent' }).key);
 
 
 let customers: Customer[] = [
@@ -302,21 +286,33 @@ export const mockApi = {
     }
 
     if (keyInfo.key_type === 'admin') {
-      return { id: 'admin-user', role: 'admin', name: '管理员', status: 'online', lastActiveAt: new Date().toISOString() };
+      const adminUser: User = { 
+        id: keyInfo.userId || 'admin-user', // Use bound ID or a default
+        role: 'admin', 
+        name: keyInfo.name, 
+        status: 'online', 
+        lastActiveAt: new Date().toISOString() 
+      };
+      return adminUser;
     }
 
-    // For agents, a key must be bound to a user to be valid for login
     if (keyInfo.key_type === 'agent') {
         const agent = agents.find(a => a.id === keyInfo.userId);
         if (agent) {
            agent.status = 'online';
            agent.lastActiveAt = new Date().toISOString();
-           return { id: agent.id, role: 'agent', name: agent.name, avatar: agent.avatar, shareId: agent.id, status: agent.status, lastActiveAt: agent.lastActiveAt };
+           const agentUser: User = { 
+                id: agent.id, 
+                role: 'agent', 
+                name: agent.name, 
+                avatar: agent.avatar, 
+                shareId: agent.id, 
+                status: agent.status, 
+                lastActiveAt: agent.lastActiveAt,
+                accessKey: keyInfo.key,
+            };
+           return agentUser;
         }
-        // If key is not bound, it's a valid key but cannot be used to log in yet.
-        // The user must be bound via the admin panel first. This logic is a bit different now.
-        // For simplicity, we'll let `extendKey` handle the binding.
-        // A fresh agent key isn't associated with anyone.
     }
 
     return null;
@@ -334,7 +330,6 @@ export const mockApi = {
 
   async getAccessKeys(): Promise<AccessKey[]> {
     await delay(300);
-    // Adapt the new KeyInfo structure to the old AccessKey type for frontend compatibility
     return Object.values(keys).map(k => ({
         id: k.key,
         key: k.key,
@@ -376,9 +371,9 @@ export const mockApi = {
     if (updates.notes) keyInfo.notes = updates.notes;
     
     // Status update is now derived, but we can simulate deletion via this
-    if (updates.status === 'suspended') { // Using 'suspended' as a signal to delete
-        delete keys[id];
-        return null;
+    if (updates.status === 'suspended') {
+        // 'suspended' is a client state, we don't store it. To "suspend", just delete the key.
+        // For this mock, we'll just leave it as is. A real backend might toggle a flag.
     }
 
     return {
@@ -391,6 +386,8 @@ export const mockApi = {
         createdAt: keyInfo.createdAt,
         expiresAt: new Date(keyInfo.expireAt).toISOString(),
         userId: keyInfo.userId,
+        usageCount: keyInfo.userId ? 1 : 0,
+        maxUsage: 1
     };
   },
 
@@ -494,7 +491,7 @@ export const mockApi = {
     return null;
   },
 
-  async extendAgentKey(agentId: string, newKeyString: string): Promise<boolean> {
+  async extendAgentKey(agentId: string, newKeyString: string): Promise<AccessKey | null> {
      const agent = agents.find(a => a.id === agentId);
      if (!agent) throw new Error("坐席不存在。");
 
@@ -505,7 +502,22 @@ export const mockApi = {
          }
      }
      
-     return bindKeyToUser(agentId, newKeyString);
+     const success = bindKeyToUser(agentId, newKeyString);
+     if (success) {
+        const keyInfo = keys[newKeyString];
+        return {
+            id: keyInfo.key,
+            key: keyInfo.key,
+            name: keyInfo.name,
+            notes: keyInfo.notes,
+            key_type: keyInfo.key_type,
+            status: 'used',
+            createdAt: keyInfo.createdAt,
+            expiresAt: new Date(keyInfo.expireAt).toISOString(),
+            userId: keyInfo.userId,
+        };
+     }
+     return null;
   },
   
   async deleteCustomer(customerId: string): Promise<boolean> {

@@ -1,35 +1,44 @@
 
-
 export type UserRole = 'admin' | 'agent';
 
 export type UserStatus = 'online' | 'busy' | 'offline' | 'away';
 
+// The User type is a generic model for any logged-in user, containing derived state.
 export interface User {
     id: string; 
     name: string;
     avatar?: string;
     role: UserRole;
     status: UserStatus;
-    accessKey?: string;
+    accessKey?: string; // The key string they are currently using
     lastActiveAt: string; 
-    shareId?: string; // The agent's own ID, used for creating aliases.
+    shareId?: string; // For agents, this is their own ID used for creating aliases.
 }
 
-export type AccessKeyType = 'agent' | 'admin';
 export type AccessKeyStatus = 'active' | 'expired' | 'suspended' | 'used';
 
 export interface AccessKey {
     id: string;
     key: string;
-    key_type: AccessKeyType;
+    key_type: UserRole; // Using UserRole for consistency
     status: AccessKeyStatus;
-    name: string;
+    name: string; // This is a descriptive name/note for the key
     notes?: string;
     usageCount?: number;
     maxUsage?: number;
     expiresAt: string | null; 
     createdAt: string;
     userId?: string; // Which user this key is bound to
+}
+
+// The Agent type represents the core agent entity, independent of login status or keys.
+export interface Agent {
+    id: string;
+    name: string;
+    avatar: string;
+    role: 'agent';
+    status: UserStatus;
+    lastActiveAt: string;
 }
 
 
@@ -94,11 +103,6 @@ export interface AgentSettings {
     welcomeMessages: string[]; 
     quickReplies: QuickReply[];
     blockedIps: string[];
-}
-
-
-export interface Agent extends User {
-    // No longer needs accessKeyId, as keys are bound via userId
 }
 
 export type Alias = {
