@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAgentStore } from "@/lib/stores/agentStore";
@@ -68,5 +67,3 @@ export function CustomerList() {
         </aside>
     );
 }
-
-    
