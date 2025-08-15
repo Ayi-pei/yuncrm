@@ -504,13 +504,18 @@ export const mockApi = {
 
     const agent = agents.find(a => a.id === agentId);
     if (!agent) return null;
+    
+    // Check for an existing, unexpired alias for this agent
+    for(const alias of aliasMap.values()){
+      if(alias.shareId === agentId && new Date(alias.expireAt) > new Date()){
+        return alias;
+      }
+    }
 
-    // The "shareId" for the alias is now the agent's ID
     const shareId = agent.id;
     const expireAt = getAlignedExpireAt();
     
-    // Generate a unique token for this session
-    for (let i = 0; i < 5; i++) { // Try up to 5 times
+    for (let i = 0; i < 5; i++) {
         const token = generateToken(5);
         if (!aliasMap.has(token)) {
             const alias: Alias = {
@@ -522,25 +527,23 @@ export const mockApi = {
             return alias;
         }
     }
-    return null; // Failed to generate a unique token
+    return null; 
   },
 
   async getChatDataForVisitorByToken(token: string) {
       await delay(500);
       
       const agentId = resolveAlias(token);
-      if(!agentId) return null; // Link is invalid or expired
+      if(!agentId) return null; 
       
       const agent = agents.find(a => a.id === agentId);
-      if(!agent) return null; // Agent no longer exists
+      if(!agent) return null; 
       
-      // CRITICAL: Check if the agent's key is still valid
       const key = accessKeys.find(k => k.id === agent.accessKeyId);
       if (!key || key.status !== 'active' || (key.expiresAt && new Date(key.expiresAt) < new Date())) {
-          return null; // Key is invalid, so the link is dead
+          return null; 
       }
 
-       // Create a new session for this link
       const customerId = generateId('cust');
       const newCustomer: Customer = {
           id: customerId,

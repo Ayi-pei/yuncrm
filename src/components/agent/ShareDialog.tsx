@@ -13,6 +13,7 @@ import QRCode, { QRCodeProps } from "qrcode.react";
 import { mockApi } from "@/lib/mock-api";
 import { SegmentedControl } from "../shared/SegmentedControl";
 import { useAgentStore } from "@/lib/stores/agentStore";
+import type { Alias } from "@/lib/types";
 
 interface ShareDialogProps {
     isOpen: boolean;
@@ -25,6 +26,7 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
     const { user } = useAuthStore();
     const { agent } = useAgentStore();
     const { toast } = useToast();
+    const [alias, setAlias] = useState<Alias | null>(null);
     const [shareUrl, setShareUrl] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [qrStyle, setQrStyle] = useState<"none" | "icon" | "avatar">("none");
@@ -32,14 +34,14 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
 
     useEffect(() => {
         const generateUrl = async () => {
-            if (isOpen && user?.id) {
+            if (user?.id) {
                 setIsLoading(true);
                 try {
-                    // This API call now creates a short-lived, expiring alias token
-                    const alias = await mockApi.getOrCreateAlias(user.id);
-                    if (alias) {
+                    const aliasData = await mockApi.getOrCreateAlias(user.id);
+                    if (aliasData) {
+                        setAlias(aliasData);
                         const baseUrl = window.location.origin;
-                        const url = `${baseUrl}/naoiod/${alias.token}`;
+                        const url = `${baseUrl}/naoiod/${aliasData.token}`;
                         setShareUrl(url);
                     } else {
                          toast({ title: "错误", description: "无法生成分享链接，请稍后重试。", variant: "destructive" });
@@ -54,9 +56,6 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
         
         if(isOpen) {
             generateUrl();
-        } else {
-            // Reset URL when dialog is closed
-            setShareUrl("");
         }
     }, [user, isOpen, toast]);
 
