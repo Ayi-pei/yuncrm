@@ -20,6 +20,19 @@ import { add, differenceInMilliseconds } from 'date-fns';
 
 const getFutureDate = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 
+// --- ALIAS/TOKEN UTILS ---
+
+const aliasMap = new Map<string, Alias>(); // token -> Alias
+
+const generateToken = (length = 5) => {
+    const alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    let out = '';
+    for (let i = 0; i < length; i++) {
+        out += alphabet[Math.floor(Math.random() * alphabet.length)];
+    }
+    return out;
+};
+
 function getAlignedExpireAt(now = new Date()): Date {
   const expire = new Date(now);
 
@@ -33,24 +46,11 @@ function getAlignedExpireAt(now = new Date()): Date {
     expire.setHours(12, 0, 0, 0);
   } else {
     // 领取时间 < 12:00 -> 当天 24:00 过期（实际是当天的 24:00）
-    expire.setDate(expire.getDate());
     expire.setHours(24, 0, 0, 0);
   }
 
   return expire;
 }
-
-// --- ALIAS/TOKEN UTILS ---
-const aliasMap = new Map<string, Alias>(); // token -> Alias
-
-const generateToken = (length = 5) => {
-    const alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
-    let out = '';
-    for (let i = 0; i < length; i++) {
-        out += alphabet[Math.floor(Math.random() * alphabet.length)];
-    }
-    return out;
-};
 
 function resolveAlias(token: string): string | null {
   const item = aliasMap.get(token);
@@ -59,7 +59,6 @@ function resolveAlias(token: string): string | null {
     aliasMap.delete(token); // Expired, so we delete it.
     return null;
   }
-  // The shareId is the agentId in this implementation
   return item.shareId; 
 }
 
@@ -298,13 +297,6 @@ export const mockApi = {
   async createAccessKey(data: { name: string; key_type: UserRole, notes?: string }): Promise<AccessKey> {
     await delay(500);
     
-    let expiresAt: string | null;
-    if (data.key_type === 'admin') {
-      expiresAt = getAlignedExpireAt().toISOString();
-    } else {
-      expiresAt = getFutureDate(30);
-    }
-
     const newKey: AccessKey = {
       id: generateId('key'),
       key: `${data.key_type.toUpperCase()}-${data.name.toUpperCase().replace(/\s/g, "")}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
@@ -314,7 +306,7 @@ export const mockApi = {
       status: "active",
       createdAt: new Date().toISOString(),
       lastUsedAt: null,
-      expiresAt: expiresAt,
+      expiresAt: data.key_type === 'admin' ? getAlignedExpireAt().toISOString() : getFutureDate(30),
     };
     accessKeys.push(newKey);
 
@@ -513,7 +505,6 @@ export const mockApi = {
     }
 
     const shareId = agent.id;
-    const expireAt = getAlignedExpireAt();
     
     for (let i = 0; i < 5; i++) {
         const token = generateToken(5);
@@ -521,7 +512,7 @@ export const mockApi = {
             const alias: Alias = {
                 token,
                 shareId: shareId,
-                expireAt: expireAt.toISOString(),
+                expireAt: getAlignedExpireAt().toISOString(),
             };
             aliasMap.set(token, alias);
             return alias;
