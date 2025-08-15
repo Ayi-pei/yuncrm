@@ -163,8 +163,8 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
                                 <div className="space-y-2">
                                     {quickReplies.map(qr => (
                                         <div key={qr.id} className="flex items-center gap-2">
-                                            <Input placeholder="自定义快捷指令" value={qr.shortcut} onChange={e => updateQuickReply(qr.id, 'shortcut', e.target.value)}/>
-                                            <Input placeholder="消息" className="flex-1" value={qr.message} onChange={e => updateQuickReply(qr.id, 'message', e.target.value)} />
+                                            <Input placeholder="快捷指令 (例如 a)" value={qr.shortcut} onChange={e => updateQuickReply(qr.id, 'shortcut', e.target.value)}/>
+                                            <Input placeholder="快捷回复内容" className="flex-1" value={qr.message} onChange={e => updateQuickReply(qr.id, 'message', e.target.value)} />
                                             <Button variant="ghost" size="icon" onClick={() => removeQuickReply(qr.id)}><Trash className="h-4 w-4 text-destructive"/></Button>
                                         </div>
                                     ))}
