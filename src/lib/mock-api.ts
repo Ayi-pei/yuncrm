@@ -53,10 +53,8 @@ const generateToken = (length = 5) => {
 
 // --- IN-MEMORY DATABASE ---
 
-// shareId -> Alias
-const aliasMap = new Map<string, Alias>();
-// token -> shareId
-const tokenMap = new Map<string, string>();
+// token -> sessionId. This is the core of the new logic.
+const aliasToSessionMap = new Map<string, string>();
 
 
 let accessKeys: AccessKey[] = [
@@ -391,12 +389,12 @@ export const mockApi = {
     return { agent, sessions, customers: relevantCustomers, settings, key };
   },
 
-  async sendMessage(sessionId: string, message: Omit<ChatMessage, 'id'>): Promise<ChatMessage> {
+  async sendMessage(sessionId: string, message: Omit<ChatMessage, 'id' | 'timestamp'>): Promise<ChatMessage> {
     await delay(250);
     const session = chatSessions.find(s => s.id === sessionId);
     if (!session) throw new Error("Session not found");
 
-    const newMessage = { ...message, id: generateId('msg'), timestamp: new Date().toISOString() };
+    const newMessage = { ...message, id: generateId('msg'), timestamp: new Date().toISOString() } as ChatMessage;
     session.messages.push(newMessage);
     
     return newMessage;
@@ -495,24 +493,55 @@ export const mockApi = {
   },
 
   // --- Visitor & Alias Functions ---
-
-  async getOrCreateAlias(shareId: string): Promise<Alias | null> {
+  async getOrCreateAlias(agentId: string): Promise<Alias | null> {
     await delay(100);
-    const existingAlias = Array.from(aliasMap.values()).find(a => a.shareId === shareId);
-    if (existingAlias) {
-        return existingAlias;
-    }
 
+    const agent = agents.find(a => a.id === agentId);
+    if (!agent) return null;
+    
+    // Create a new session for this link
+    const customerId = generateId('cust');
+    const newCustomer: Customer = {
+        id: customerId,
+        name: generateChineseName(),
+        avatar: `https://i.pravatar.cc/150?u=${customerId}`,
+        ipAddress: "192.168.1.100",
+        device: "Chrome on Windows",
+        location: "美国，旧金山",
+        firstSeen: new Date().toISOString()
+    };
+    customers.push(newCustomer);
+
+    const welcomeMessages = agentSettings[agent.id]?.welcomeMessages || ["您好！有什么可以帮您的吗？"];
+    const initialMessages: ChatMessage[] = welcomeMessages.filter(m => m.trim() !== '').map((msg, index) => ({
+      id: generateId(`msg-welcome-${index}`),
+      type: 'text',
+      text: msg,
+      sender: 'agent',
+      agentId: agent.id,
+      timestamp: new Date(Date.now() + index).toISOString(),
+    }));
+    
+    const newSession: ChatSession = {
+        id: generateId('session'),
+        customerId: newCustomer.id,
+        agentId: agent.id,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+        messages: initialMessages
+    };
+    chatSessions.push(newSession);
+
+    // Generate a unique token for this session
     for (let i = 0; i < 5; i++) {
         const token = generateToken(5);
-        if (!tokenMap.has(token)) {
+        if (!aliasToSessionMap.has(token)) {
             const alias: Alias = {
                 token,
-                shareId,
+                sessionId: newSession.id,
                 createdAt: new Date().toISOString(),
             };
-            aliasMap.set(shareId, alias);
-            tokenMap.set(token, shareId);
+            aliasToSessionMap.set(token, newSession.id);
             return alias;
         }
     }
@@ -521,48 +550,28 @@ export const mockApi = {
 
   async getChatDataForVisitorByToken(token: string) {
       await delay(500);
-      const shareId = tokenMap.get(token);
-      if(!shareId) return null;
+      const sessionId = aliasToSessionMap.get(token);
+      if(!sessionId) return null;
 
-      const agent = agents.find(a => a.shareId === shareId && a.status !== 'offline');
-      if(!agent) return null;
-
-      const customerId = generateId('cust');
-      const newCustomer: Customer = {
-          id: customerId,
-          name: generateChineseName(),
-          avatar: `https://i.pravatar.cc/150?u=${customerId}`,
-          ipAddress: "192.168.1.100",
-          device: "Chrome on Windows",
-          location: "美国，旧金山",
-          firstSeen: new Date().toISOString()
-      };
-      customers.push(newCustomer);
-
-      const welcomeMessages = agentSettings[agent.id]?.welcomeMessages || ["您好！有什么可以帮您的吗？"];
-      const initialMessages: ChatMessage[] = welcomeMessages.filter(m => m.trim() !== '').map((msg, index) => ({
-        id: generateId(`msg-welcome-${index}`),
-        type: 'text',
-        text: msg,
-        sender: 'agent',
-        agentId: agent.id,
-        timestamp: new Date(Date.now() + index).toISOString(), // Ensure unique timestamps
-      }));
+      const session = chatSessions.find(s => s.id === sessionId);
+      if(!session) return null;
       
-      const newSession: ChatSession = {
-          id: generateId('session'),
-          customerId: newCustomer.id,
-          agentId: agent.id,
-          status: "pending",
-          createdAt: new Date().toISOString(),
-          messages: initialMessages
-      };
-      chatSessions.push(newSession);
+      const agent = agents.find(a => a.id === session.agentId);
+      if(!agent) return null;
+      
+      // CRITICAL: Check if the agent's key is still valid
+      const key = accessKeys.find(k => k.id === agent.accessKeyId);
+      if (!key || key.status !== 'active' || (key.expiresAt && new Date(key.expiresAt) < new Date())) {
+          return null; // Key is invalid, so the link is dead
+      }
+      
+      const customer = customers.find(c => c.id === session.customerId);
+      if(!customer) return null;
 
       return {
           agent: { name: agent.name, avatar: agent.avatar, status: agent.status },
-          session: newSession,
-          customer: newCustomer,
+          session: session,
+          customer: customer,
       };
   },
   

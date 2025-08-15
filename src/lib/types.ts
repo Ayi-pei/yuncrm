@@ -76,6 +76,7 @@ export interface FileChatMessage extends BaseChatMessage {
     name: string;
     size: number;
     progress: number; // 0-100
+    url?: string;
   };
   text?: string; // Optional text with file
 }
@@ -102,6 +103,6 @@ export interface Agent extends User {
 
 export type Alias = {
   token: string;     // The short, 5-character token
-  shareId: string;   // The real, original shareId
+  sessionId: string; // The session this token points to
   createdAt: string; // ISO
 };

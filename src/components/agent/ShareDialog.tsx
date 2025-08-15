@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -24,14 +25,17 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
 
     useEffect(() => {
         const generateUrl = async () => {
-            if (isOpen && user?.shareId) {
+            if (isOpen && user?.id) {
                 setIsLoading(true);
                 try {
-                    const alias = await mockApi.getOrCreateAlias(user.shareId);
+                    // getOrCreateAlias now requires the agentId
+                    const alias = await mockApi.getOrCreateAlias(user.id);
                     if (alias) {
-                        const baseUrl = "https://agentverse.app"; 
+                        const baseUrl = window.location.origin;
                         const url = `${baseUrl}/naoiod/${alias.token}`;
                         setShareUrl(url);
+                    } else {
+                         toast({ title: "错误", description: "无法生成分享链接，请稍后重试。", variant: "destructive" });
                     }
                 } catch (e) {
                     toast({ title: "错误", description: "无法生成分享链接。", variant: "destructive" });
@@ -40,7 +44,13 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
                 }
             }
         };
-        generateUrl();
+        
+        if(isOpen) {
+            generateUrl();
+        } else {
+            // Reset URL when dialog is closed
+            setShareUrl("");
+        }
     }, [user, isOpen, toast]);
     
     const handleCopy = () => {
@@ -71,13 +81,13 @@ export function ShareDialog({ isOpen, setIsOpen }: ShareDialogProps) {
                 <DialogHeader>
                     <DialogTitle>分享您的聊天链接</DialogTitle>
                     <DialogDescription>
-                        与访客分享此唯一链接或二维码，即可开始与您的专属聊天会话。
+                        与访客分享此唯一链接或二维码，即可开始与您的专属聊天会话。链接在密钥过期后将失效。
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col items-center gap-6 pt-4">
                     <div className="p-4 bg-white rounded-lg border">
                         {isLoading || !shareUrl ? (
-                            <div className="h-[208px] w-[208px] bg-gray-200 animate-pulse rounded-md flex items-center justify-center">
+                            <div className="h-[192px] w-[192px] bg-gray-200 animate-pulse rounded-md flex items-center justify-center">
                                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                             </div>
                         ) : (
