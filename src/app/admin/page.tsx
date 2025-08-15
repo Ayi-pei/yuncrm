@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { KeyRound, Users, ArrowRight } from "lucide-react";
 import { APP_NAME } from "@/lib/constants";
 import Link from "next/link";
+import { DashboardStats } from "@/components/admin/DashboardStats";
 
 export default function AdminDashboardPage() {
   return (
@@ -47,7 +48,6 @@ export default function AdminDashboardPage() {
           </Card>
         </Link>
       </div>
-
        <DashboardStats />
     </div>
   );
