@@ -343,9 +343,7 @@ export const mockApi = {
 
     const newMessage = { ...message, id: generateId('msg'), timestamp: new Date().toISOString() };
     
-    if (!session.messages.some(m => m.id === newMessage.id)) {
-        session.messages.push(newMessage);
-    }
+    session.messages.push(newMessage);
     
     return newMessage;
   },
