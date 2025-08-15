@@ -1,17 +1,5 @@
 {
-  "node": {
-    "40d2013d705a00726db7501c76006e3f65f5d420d9": {
-      "workers": {
-        "app/agent/page": {
-          "moduleId": "[project]/.next-internal/server/app/agent/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/ai/flows/redact-pii.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": false
-        }
-      },
-      "layer": {
-        "app/agent/page": "action-browser"
-      }
-    }
-  },
+  "node": {},
   "edge": {},
   "encryptionKey": "GwkP05GNmWb3v1M377JqdBiK27uDdOomwm10/h7upE4="
 }
