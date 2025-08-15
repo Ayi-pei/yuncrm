@@ -9,8 +9,6 @@ import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { Send, Loader2, Sparkles, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { zhCN } from 'date-fns/locale';
 import { Skeleton } from "../ui/skeleton";
 import { ScrollArea } from "../ui/scroll-area";
 import { redactPii } from "@/ai/flows/redact-pii";
@@ -39,7 +37,7 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
             try {
                 const chatData = await mockApi.getChatDataForVisitor(shareId);
                 if (!chatData) {
-                    setError("此聊天链接无效或代理不再可用。");
+                    setError("此聊天链接无效或坐席不再可用。");
                 } else {
                     setData(chatData);
                 }
@@ -56,12 +54,12 @@ export function VisitorChat({ shareId }: VisitorChatProps) {
         if (data?.session.id) {
             const handleManualPoll = async () => {
                  const updatedSession = await mockApi.getSessionUpdates(data.session.id);
-                 if (updatedSession && updatedSession.messages.length > data.session.messages.length) {
+                 if (updatedSession && updatedSession.messages.length > (data.session.messages.length || 0)) {
                      setData(d => d ? { ...d, session: updatedSession } : null);
                  }
             }
-            const timer = setTimeout(handleManualPoll, 1500);
-            return () => clearTimeout(timer);
+            const timer = setInterval(handleManualPoll, 1500);
+            return () => clearInterval(timer);
         }
     }, [data?.session.id, data?.session.messages.length]);
     
@@ -215,5 +213,3 @@ function LoadingSkeleton() {
       </div>
     );
   }
-
-    
