@@ -424,7 +424,7 @@ export const mockApi = {
   // --- Visitor Functions ---
   async getChatDataForVisitor(shareId: string) {
       await delay(500);
-      const agent = agents.find(a => a.shareId === shareId);
+      const agent = agents.find(a => a.shareId === shareId && a.status !== 'offline');
       if(!agent) return null;
 
       const customerId = generateId('cust');
