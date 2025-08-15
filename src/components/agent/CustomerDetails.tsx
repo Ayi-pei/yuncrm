@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Globe, HardDrive, MapPin, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { zhCN } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { QuickReplies } from "./QuickReplies";
 import { ScrollArea } from "../ui/scroll-area";
@@ -19,7 +20,7 @@ export function CustomerDetails({ customer }: CustomerDetailsProps) {
         { icon: Globe, label: "IP 地址", value: customer.ipAddress },
         { icon: HardDrive, label: "设备", value: customer.device },
         { icon: MapPin, label: "位置", value: customer.location },
-        { icon: Calendar, label: "首次访问", value: format(new Date(customer.firstSeen), "PPP") },
+        { icon: Calendar, label: "首次访问", value: format(new Date(customer.firstSeen), "PPP", { locale: zhCN }) },
     ];
     
     return (
@@ -73,3 +74,5 @@ export function CustomerDetails({ customer }: CustomerDetailsProps) {
         </aside>
     );
 }
+
+    

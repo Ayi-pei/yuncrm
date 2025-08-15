@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAgentStore } from "@/lib/stores/agentStore";
@@ -5,6 +6,7 @@ import { useAuthStore } from "@/lib/stores/authStore";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { zhCN } from 'date-fns/locale';
 import { Bot, User as UserIcon } from "lucide-react";
 import { AgentProfile } from "./AgentProfile";
 import { ScrollArea } from "../ui/scroll-area";
@@ -47,7 +49,7 @@ export function CustomerList() {
                                 <div className="flex justify-between items-baseline">
                                     <p className="font-semibold truncate">{customer.name}</p>
                                     <p className="text-xs text-muted-foreground shrink-0">
-                                        {formatDistanceToNow(new Date(lastMessage.timestamp), { addSuffix: true })}
+                                        {formatDistanceToNow(new Date(lastMessage.timestamp), { addSuffix: true, locale: zhCN })}
                                     </p>
                                 </div>
                                 <p className="text-sm text-muted-foreground truncate">
@@ -66,3 +68,5 @@ export function CustomerList() {
         </aside>
     );
 }
+
+    

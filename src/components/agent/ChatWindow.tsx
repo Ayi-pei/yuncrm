@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -9,6 +10,7 @@ import { Send, Sparkles, Loader2, User as UserIcon, Smile, Mic, Paperclip, Image
 import { cn } from "@/lib/utils";
 import { useAgentStore } from "@/lib/stores/agentStore";
 import { format } from "date-fns";
+import { zhCN } from "date-fns/locale";
 import { ScrollArea } from "../ui/scroll-area";
 import { redactPii } from "@/ai/flows/redact-pii";
 
@@ -62,7 +64,7 @@ export function ChatWindow({ session }: ChatWindowProps) {
                 </Avatar>
                 <div>
                     <h2 className="font-semibold text-lg">{customer.name}</h2>
-                    <p className="text-xs text-muted-foreground">会话开始于: {format(new Date(session.createdAt), "PPP p")}</p>
+                    <p className="text-xs text-muted-foreground">会话开始于: {format(new Date(session.createdAt), "PPP p", { locale: zhCN })}</p>
                 </div>
             </header>
 
@@ -82,7 +84,7 @@ export function ChatWindow({ session }: ChatWindowProps) {
                             )}>
                                 <p className="text-sm">{msg.text}</p>
                                 <p className={cn("text-xs mt-1", msg.sender === 'agent' ? 'text-primary-foreground/70' : 'text-muted-foreground/70')}>
-                                    {format(new Date(msg.timestamp), 'p')}
+                                    {format(new Date(msg.timestamp), 'p', { locale: zhCN })}
                                 </p>
                            </div>
                             {msg.sender === 'agent' && (
@@ -141,3 +143,5 @@ export function ChatWindow({ session }: ChatWindowProps) {
         </div>
     );
 }
+
+    

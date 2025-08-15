@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from "react";
@@ -7,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "../ui/skeleton";
 import type { User, UserStatus } from "@/lib/types";
+import { format, parseISO } from "date-fns";
+import { zhCN } from "date-fns/locale";
 
 export function AgentManagementTable() {
   const { agents, fetchAgents, isLoading } = useAdminStore();
@@ -80,7 +83,7 @@ export function AgentManagementTable() {
                     </Badge>
                 </TableCell>
                 <TableCell>
-                    {agent.lastActiveAt ? new Date(agent.lastActiveAt).toLocaleString() : 'N/A'}
+                    {agent.lastActiveAt ? format(parseISO(agent.lastActiveAt), 'PPP p', { locale: zhCN }) : 'N/A'}
                 </TableCell>
                 <TableCell>
                   <code className="text-sm text-muted-foreground">{agent.accessKey}</code>
@@ -99,3 +102,5 @@ export function AgentManagementTable() {
     </div>
   );
 }
+
+    

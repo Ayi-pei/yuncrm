@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, PlusCircle, Trash, Edit, Copy, Power, PowerOff } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { zhCN } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -117,8 +119,8 @@ export function KeyManagementTable() {
                     </Badge>
                   </TableCell>
                    <TableCell>{key.usageCount} / {key.maxUsage || '∞'}</TableCell>
-                  <TableCell>{key.expiresAt ? format(parseISO(key.expiresAt), "PPP p") : "永不"}</TableCell>
-                  <TableCell>{format(parseISO(key.createdAt), "PPP")}</TableCell>
+                  <TableCell>{key.expiresAt ? format(parseISO(key.expiresAt), "PPP p", { locale: zhCN }) : "永不"}</TableCell>
+                  <TableCell>{format(parseISO(key.createdAt), "PPP", { locale: zhCN })}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -283,3 +285,5 @@ function KeyFormDialog({ isOpen, setIsOpen, editingKey, createKey, updateKey, to
         </Dialog>
     )
 }
+
+    
