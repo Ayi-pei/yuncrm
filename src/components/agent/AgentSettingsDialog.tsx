@@ -66,8 +66,8 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
     const { toast } = useToast();
     
     const [name, setName] = useState(agent?.name || "");
-    const [welcomeMessages, setWelcomeMessages] = useState<string[]>(settings?.welcomeMessages || ["", ""]);
-    const [quickReplies, setQuickReplies] = useState<QuickReply[]>(settings?.quickReplies || []);
+    const [welcomeMessages, setWelcomeMessages] = useState<string[]>(["", ""]);
+    const [quickReplies, setQuickReplies] = useState<QuickReply[]>([]);
     const [showReminder, setShowReminder] = useState(true);
     const [newKey, setNewKey] = useState("");
     const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
@@ -86,7 +86,10 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
                 settings.welcomeMessages?.[0] || "",
                 settings.welcomeMessages?.[1] || "",
             ]);
-            setQuickReplies(settings.quickReplies);
+            setQuickReplies(settings.quickReplies || []);
+        } else {
+            setWelcomeMessages(["",""]);
+            setQuickReplies([]);
         }
         setNewKey(""); // Reset on open
         setEditingReplyId(null); // Reset editing state on open
@@ -110,7 +113,7 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
         return () => clearInterval(interval);
     }, [key, showReminder, toast]);
 
-    if (!agent || !settings) return null;
+    if (!agent) return null;
 
     const handleProfileSave = async () => {
         await updateProfile(agent.id, { name });
@@ -127,7 +130,10 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
     
     const handleSettingsSave = async () => {
         const filteredWelcomeMessages = welcomeMessages.filter(m => m.trim() !== "");
-        const newSettings: AgentSettings = { ...settings, welcomeMessages: filteredWelcomeMessages, quickReplies };
+        const finalQuickReplies = quickReplies.filter(qr => qr.shortcut.trim() !== '' && qr.message.trim() !== '');
+        
+        const newSettings: AgentSettings = { ...settings!, welcomeMessages: filteredWelcomeMessages, quickReplies: finalQuickReplies };
+        
         await updateSettings(agent.id, newSettings);
         toast({ title: "设置已保存", description: "您的聊天设置已更新。" });
         setEditingReplyId(null);
@@ -135,16 +141,16 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
 
     const addQuickReply = () => {
         const newId = `new-${Date.now()}`;
-        setQuickReplies([...quickReplies, { id: newId, shortcut: "", message: "" }]);
+        setQuickReplies(prev => [...prev, { id: newId, shortcut: "", message: "" }]);
         setEditingReplyId(newId);
     }
     
     const updateQuickReply = (id: string, field: 'shortcut' | 'message', value: string) => {
-        setQuickReplies(quickReplies.map(qr => qr.id === id ? { ...qr, [field]: value } : qr));
+        setQuickReplies(prev => prev.map(qr => qr.id === id ? { ...qr, [field]: value } : qr));
     }
     
     const removeQuickReply = (id: string) => {
-        setQuickReplies(quickReplies.filter(qr => qr.id !== id));
+        setQuickReplies(prev => prev.filter(qr => qr.id !== id));
     }
     
     const getRemainingTime = () => {
@@ -314,5 +320,3 @@ export function AgentSettingsDialog({ isOpen, setIsOpen }: AgentSettingsDialogPr
         </Dialog>
     );
 }
-
-    
