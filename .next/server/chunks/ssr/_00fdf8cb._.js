@@ -61,11 +61,9 @@ __turbopack_context__.n(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$c
 var { g: global, __dirname } = __turbopack_context__;
 {
 __turbopack_context__.s({
-    "ADMIN_KEY": (()=>ADMIN_KEY),
     "APP_NAME": (()=>APP_NAME)
 });
 const APP_NAME = "云聚-CRM";
-const ADMIN_KEY = "ADMIN-SUPER-SECRET";
 }}),
 "[project]/src/app/page.tsx [app-rsc] (ecmascript)": ((__turbopack_context__) => {
 "use strict";

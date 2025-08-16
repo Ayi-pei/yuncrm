@@ -13,7 +13,6 @@ import {
   UserRole,
   AccessKeyStatus,
 } from "./types";
-import { ADMIN_KEY } from "./constants";
 
 // --- NEW KEY MANAGEMENT SYSTEM based on user's proposal ---
 
@@ -155,6 +154,7 @@ setInterval(() => {
 
 // --- IN-MEMORY DATABASE (Legacy parts) ---
 
+const ADMIN_KEY = process.env.ADMIN_KEY || "ADMIN-SUPER-SECRET";
 // Initial admin key setup
 keys[ADMIN_KEY] = {
     key: ADMIN_KEY,
