@@ -1,0 +1,223 @@
+"use client";
+
+import { useAgentStore } from "@/lib/stores/agentStore";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
+import { zhCN } from "date-fns/locale";
+import {
+  Headset,
+  User as UserIcon,
+  Archive,
+  Trash2,
+  ArchiveRestore,
+} from "lucide-react";
+import { AgentProfile } from "./AgentProfile";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
+import { Button } from "../ui/button";
+import { useToast } from "@/hooks/use-toast";
+
+export function CustomerList() {
+  const {
+    sessions,
+    customers,
+    activeSessionId,
+    setActiveSessionId,
+    deleteCustomer,
+    unarchiveSession,
+  } = useAgentStore();
+  const { toast } = useToast();
+
+  const handleDelete = (e: React.MouseEvent, customerId: string) => {
+    e.stopPropagation(); // Prevent session selection
+    deleteCustomer(customerId);
+    toast({
+      title: "客户已删除",
+      description: "该客户及其对话已被移除。",
+      variant: "destructive",
+    });
+  };
+
+  const handleUnarchive = (e: React.MouseEvent, sessionId: string) => {
+    e.stopPropagation();
+    unarchiveSession(sessionId);
+    toast({ title: "会话已恢复", description: "该会话已从归档中恢复。" });
+  };
+
+  const activeSessions = sessions.filter((s) => s.status !== "archived");
+  const archivedSessions = sessions.filter((s) => s.status === "archived");
+
+  const renderSessionList = (list: typeof sessions, isArchivedList = false) => {
+    if (list.length === 0) {
+      return (
+        <div className="flex-grow flex flex-col items-center justify-center text-muted-foreground text-center p-4">
+          <Archive className="h-12 w-12" />
+          <p className="mt-4 text-sm font-semibold">
+            {isArchivedList ? "没有已归档的会话" : "没有待处理的会话"}
+          </p>
+          <p className="text-xs">
+            {isArchivedList ? "所有会话都在主列表中。" : "祝您有美好的一天！"}
+          </p>
+        </div>
+      );
+    }
+
+    return list.map((session) => {
+      const customer = customers.find((c) => c.id === session.customerId);
+      const lastMessage = session.messages[session.messages.length - 1];
+
+      // 添加检查确保customer存在
+      if (!customer) {
+        console.warn(`Customer not found for session ${session.id}`);
+        return null;
+      }
+
+      // 添加检查确保lastMessage存在
+      if (!lastMessage) {
+        console.warn(`No messages found for session ${session.id}`);
+        return null;
+      }
+
+      return (
+        <div key={session.id} className="relative group">
+          <button
+            onClick={() => setActiveSessionId(session.id)}
+            className={cn(
+              "w-full text-left p-3 rounded-lg flex gap-3 items-center transition-colors",
+              activeSessionId === session.id
+                ? "bg-primary/10"
+                : "hover:bg-muted/50"
+            )}
+          >
+            <Avatar className="h-12 w-12 border">
+              <AvatarImage src={customer.avatar} />
+              <AvatarFallback>
+                <UserIcon />
+              </AvatarFallback>
+              {session.status === "pending" && (
+                <div className="absolute bottom-0 right-0 h-3 w-3 bg-accent rounded-full border-2 border-background" />
+              )}
+            </Avatar>
+            <div className="flex-1 overflow-hidden">
+              <div className="flex justify-between items-baseline">
+                <p className="font-semibold truncate">{customer.name}</p>
+                <p className="text-xs text-muted-foreground shrink-0">
+                  {formatDistanceToNow(new Date(lastMessage.timestamp), {
+                    addSuffix: true,
+                    locale: zhCN,
+                  })}
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground truncate">
+                {lastMessage.type === "text"
+                  ? lastMessage.text
+                  : `[${lastMessage.file.name}]`}
+              </p>
+            </div>
+          </button>
+          <div className="absolute top-1/2 -translate-y-1/2 right-2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+            {isArchivedList ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground rounded-full"
+                onClick={(e) => handleUnarchive(e, session.id)}
+              >
+                <ArchiveRestore className="h-5 w-5" />
+              </Button>
+            ) : (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "h-8 w-8 text-muted-foreground rounded-full relative overflow-hidden",
+                      "bg-no-repeat bg-[length:200%_100%] bg-[100%_0]",
+                      "hover:text-white transition-all duration-300",
+                      "hover:bg-[0%_0%] hover:bg-destructive/80"
+                    )}
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>您确定要删除该客户吗？</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      此操作无法撤销。这将会永久删除该客户及其所有对话历史。
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>取消</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={(e) => handleDelete(e, customer.id)}
+                      className="bg-destructive hover:bg-destructive/90"
+                    >
+                      删除
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
+        </div>
+      );
+    });
+  };
+
+  return (
+    <aside className="w-80 border-r bg-muted/20 flex flex-col h-full">
+      <Tabs
+        defaultValue="conversations"
+        className="flex-1 flex flex-col min-h-0"
+      >
+        <div className="p-3 border-b flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
+              <Headset size={24} />
+            </div>
+            <TabsList className="grid w-full grid-cols-2 h-10">
+              <TabsTrigger value="conversations">会话</TabsTrigger>
+              <TabsTrigger value="archived">归档</TabsTrigger>
+            </TabsList>
+          </div>
+        </div>
+
+        <TabsContent
+          value="conversations"
+          className="flex-1 min-h-0 flex flex-col"
+        >
+          <div className="flex-grow overflow-y-auto">
+            <div className="p-2 space-y-1">
+              {renderSessionList(activeSessions)}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="archived" className="flex-1 min-h-0 flex flex-col">
+          <div className="flex-grow overflow-y-auto">
+            <div className="p-2 space-y-1">
+              {renderSessionList(archivedSessions, true)}
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      <div className="p-2 border-t mt-auto flex-shrink-0">
+        <AgentProfile />
+      </div>
+    </aside>
+  );
+}
