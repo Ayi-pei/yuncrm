@@ -14,7 +14,7 @@ import {
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Copy, Download, Loader2, User, Code, Headset } from "lucide-react";
-import { useAuthStore } from "@/lib/stores/authStore";
+import { useAuthContext } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import QRCode from "qrcode.react";
 import { mockApi } from "@/lib/mock-api";
@@ -28,10 +28,10 @@ interface ShareDialogProps {
 }
 
 const APP_ICON_SVG_DATA_URL =
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWhlYWRzZXQiPjxwYXRoIGQ9Ik0xOCAxN2ExIDAgMCAxLSAxIDEgNiA2IDAgMCAxLTYgNnYxYTEgMSAwIDAgMSA1IDIuNUE4LjUgOC41IDAgMCAwIDE4IDE3WiIvPjxwYXRoIGQ9Ik0xOCAxN2ExIDAgMCAxLSAxIDEgNiA2IDAgMCAxLTYgNnYxYTEgMSAwIDAgMSAxIDAgNCA0IDAgMCAwIDQtNEgxN2ExIDEgMCAwIDEgMS0xWiIvPjxwYXRoIGQ9Im0xNSA1IgMiAyLTMgMy0yLTJ6bS0zIDRMNyAxNWw1IDUiLz48cGF0aCBkPSJNMy41IDIwLjVDMi42IDIwLjUgMiAxOS45IDIgMTl2LTZzMC00IDQgNGwwIDJjMCAxLjEgMCAxLjEtMSAxLjEtMS4xIDAtMS4xIDAtMS4xLTEuMVoiLz48L3N2Zz4=";
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWhlYWRzZXQiPjxwYXRoIGQ9Ik0xOCAxN2ExIDAgMCAxLSAxIDEgNiA2IDAgMCAxLTYgNnYxYTEgMSAwIDAgMSA1IDIuNUE4LjUgOC41IDAgMCAwIDE4IDE3WiIvPjxwYXRoIGQ9Ik0xOCAxN2ExIDAgMCAxLSAxIDEgNiA2IDAgMCAxLTYgNnYxYTEgMSAwIDAgMSAxIDAgNCA0IDAgMCAwIDQtNEgxN2ExIDEgMCAwIDEgMS0xWiIvPjxwYXRoIGQ9Im0xNSA1IgMiMiAyLTMgMy0yLTJ6bS0zIDRMNyAxNWw1IDUiLz48cGF0aCBkPSJNMy41IDIwLjVDMi42IDIwLjUgMiAxOS45IDIgMTl2LTZzMC00IDQgNGwwIDJjMCAxLjEgMCAxLjEtMSAxLjEtMS4xIDAtMS4xIDAtMS4xLTEuMVoiLz48L3N2Zz4=";
 
 export function ShareDialog({ isOpen, setIsOpenAction }: ShareDialogProps) {
-  const { user } = useAuthStore();
+  const { user } = useAuthContext();
   const { agent, shouldInvalidateAliases, aliasesInvalidated } =
     useAgentStore();
   const { toast } = useToast();
@@ -46,24 +46,44 @@ export function ShareDialog({ isOpen, setIsOpenAction }: ShareDialogProps) {
       if (user?.id) {
         setIsLoading(true);
         try {
-          // This function now intelligently gets an existing valid alias or creates a new one.
+          // 尝试获取或创建别名
           const aliasData = await mockApi.getOrCreateAlias(user.id);
+
           if (aliasData) {
+            // 成功获取别名，设置分享URL
             setAlias(aliasData);
             const baseUrl = window.location.origin;
             const url = `${baseUrl}/naoiod/${aliasData.token}`;
             setShareUrl(url);
           } else {
+            // 获取别名失败，显示具体错误信息
+            console.error(
+              "Failed to generate share link for agent ID:",
+              user.id
+            );
+
+            // 检查用户是否为坐席角色
+            if (user.role !== "agent") {
+              toast({
+                title: "错误",
+                description: "只有坐席角色才能生成分享链接。",
+                variant: "destructive",
+              });
+              return;
+            }
+
+            // 检查是否绑定了有效密钥
             toast({
               title: "错误",
-              description: "无法生成分享链接，请稍后重试。",
+              description: "无法生成分享链接，请确保您已绑定有效的坐席密钥。",
               variant: "destructive",
             });
           }
         } catch (e) {
+          console.error("Error generating share link:", e);
           toast({
             title: "错误",
-            description: "无法生成分享链接。",
+            description: "生成分享链接时发生错误，请稍后重试。",
             variant: "destructive",
           });
         } finally {
@@ -72,12 +92,7 @@ export function ShareDialog({ isOpen, setIsOpenAction }: ShareDialogProps) {
       }
     };
 
-    // Trigger on open, or if the alias has been invalidated (e.g. by extending a key)
     if (isOpen) {
-      if (shouldInvalidateAliases) {
-        setShareUrl(""); // Clear the url to show loading and force a refetch
-        aliasesInvalidated(); // Reset the flag in the store
-      }
       generateUrl();
     }
   }, [user, isOpen, toast, shouldInvalidateAliases, aliasesInvalidated]);
@@ -155,7 +170,7 @@ export function ShareDialog({ isOpen, setIsOpenAction }: ShareDialogProps) {
           </div>
           <SegmentedControl
             value={qrStyle}
-            onValueChange={(val) =>
+            onValueChangeAction={(val) =>
               setQrStyle(val as "none" | "icon" | "avatar")
             }
             options={[

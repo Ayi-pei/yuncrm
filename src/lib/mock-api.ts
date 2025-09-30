@@ -320,13 +320,15 @@ export const mockApi = {
     await delay(500);
     const keyInfo = keys[key];
 
+    // 如果密钥不存在、已暂停或已过期，直接返回null
     if (!keyInfo || keyInfo.suspended || Date.now() > keyInfo.expireAt) {
       return null;
     }
 
+    // 处理管理员登录
     if (keyInfo.key_type === "admin") {
       const adminUser: User = {
-        id: keyInfo.userId || "admin-user", // Use bound ID or a default
+        id: keyInfo.userId || "admin-user",
         role: "admin",
         name: keyInfo.name,
         status: "online",
@@ -335,12 +337,15 @@ export const mockApi = {
       return adminUser;
     }
 
+    // 处理坐席登录
     if (keyInfo.key_type === "agent") {
       let agent = agents.find((a) => a.id === keyInfo.userId);
 
-      // 首次使用未绑定的坐席密钥：自动创建并绑定一个新坐席
+      // 如果密钥未绑定到坐席，自动创建新坐席并绑定
       if (!agent && !keyInfo.userId) {
-        const newAgentId = generateId("agent");
+        const newAgentId = `agent-${Date.now()}-${Math.random()
+          .toString(36)
+          .substr(2, 9)}`;
         const newAgentName = keyInfo.name || generateChineseName();
         const newAgent: Agent = {
           id: newAgentId,
@@ -350,23 +355,35 @@ export const mockApi = {
           lastActiveAt: new Date().toISOString(),
           role: "agent",
         };
+
+        // 添加新坐席到坐席列表
         agents.push(newAgent);
-        // 初始化默认设置
+
+        // 为新坐席初始化设置
         agentSettings[newAgentId] = {
           welcomeMessages: ["您好！今天有什么可以帮您的吗？"],
           quickReplies: [],
           blockedIps: [],
         };
-        // 绑定密钥到此新坐席
+
+        // 绑定密钥到新坐席 (直接设置，因为这是新创建的坐席)
         keyInfo.userId = newAgentId;
         agent = newAgent;
+
+        console.log("Created new agent and bound to key:", {
+          agent: newAgent,
+          keyInfo,
+          boundUserId: keyInfo.userId,
+        });
       }
 
+      // 如果找到或创建了坐席，更新其状态并返回用户对象
       if (agent) {
         agent.status = "online";
         agent.lastActiveAt = new Date().toISOString();
+
         const agentUser: User = {
-          id: agent.id,
+          id: keyInfo.userId || agent.id, // 确保使用绑定到密钥的agentId
           role: "agent",
           name: agent.name,
           avatar: agent.avatar,
@@ -375,6 +392,7 @@ export const mockApi = {
           lastActiveAt: agent.lastActiveAt,
           accessKey: keyInfo.key,
         };
+
         return agentUser;
       }
     }
@@ -530,8 +548,16 @@ export const mockApi = {
   // --- Agent Functions ---
   async getAgentData(agentId: string) {
     await delay(500);
+    console.log("getAgentData called with agentId:", agentId);
+    console.log("Current agents list:", agents);
+
     const agent = agents.find((a) => a.id === agentId);
-    if (!agent) return null;
+    console.log("Found agent:", agent);
+
+    if (!agent) {
+      console.log("Agent not found, returning null");
+      return null;
+    }
 
     const sessions = chatSessions.filter((s) => s.agentId === agentId);
     const customerIds = sessions.map((s) => s.customerId);
@@ -561,7 +587,15 @@ export const mockApi = {
         }
       : null;
 
-    return { agent, sessions, customers: relevantCustomers, settings, key };
+    const result = {
+      agent,
+      sessions,
+      customers: relevantCustomers,
+      settings,
+      key,
+    };
+    console.log("Returning agent data:", result);
+    return result;
   },
 
   async sendMessage(
@@ -680,18 +714,77 @@ export const mockApi = {
   async getOrCreateAlias(agentId: string): Promise<Alias | null> {
     await delay(100);
 
-    const agent = agents.find((a) => a.id === agentId);
-    if (!agent) return null;
+    console.log("getOrCreateAlias called with agentId:", agentId);
+    console.log(
+      "All keys with userIds:",
+      Object.values(keys)
+        .filter((k) => k.userId)
+        .map((k) => ({ key: k.key, userId: k.userId, keyType: k.key_type }))
+    );
+    console.log("Looking for key bound to agentId:", agentId);
 
-    const boundKey = Object.values(keys).find((k) => k.userId === agentId);
-    if (!boundKey || Date.now() > boundKey.expireAt) return null; // Agent has no valid key
+    // 首先查找是否有绑定到该agentId的有效密钥
+    const boundKey = Object.values(keys).find(
+      (k) => k.userId === agentId && k.key_type === "agent"
+    );
 
-    // Check for existing valid alias first
+    if (!boundKey) {
+      console.error(`No bound key found for agent ${agentId}`);
+      console.error(
+        "Available bound keys:",
+        Object.values(keys).filter((k) => k.userId && k.key_type === "agent")
+      );
+      return null;
+    }
+
+    if (Date.now() > boundKey.expireAt) {
+      console.error(`Key for agent ${agentId} has expired`);
+      return null;
+    }
+
+    // 查找匹配的坐席，如果不存在则创建
+    let agent = agents.find((a) => a.id === agentId);
+
+    // 如果坐席不存在，可能是刚创建的，尝试从密钥信息重建坐席
+    if (!agent) {
+      console.log(
+        `Agent ${agentId} not found in memory, attempting to recreate from key info`
+      );
+
+      const newAgent: Agent = {
+        id: agentId,
+        name: boundKey.name || generateChineseName(),
+        avatar: `https://i.pravatar.cc/150?u=${agentId}`,
+        status: "online",
+        lastActiveAt: new Date().toISOString(),
+        role: "agent",
+      };
+
+      // 添加坐席到内存
+      agents.push(newAgent);
+
+      // 初始化坐席设置
+      if (!agentSettings[agentId]) {
+        agentSettings[agentId] = {
+          welcomeMessages: ["您好！今天有什么可以帮您的吗？"],
+          quickReplies: [],
+          blockedIps: [],
+        };
+      }
+
+      agent = newAgent;
+      console.log("Recreated agent:", { id: agent.id, name: agent.name });
+    }
+
+    // boundKey 已经在上面验证过了，这里直接使用
+
+    // 检查是否存在已有的有效别名
     const existingToken = Object.keys(shortLinks).find((token) => {
       const link = shortLinks[token];
       return link.shareId === agentId && Date.now() <= link.expireAt;
     });
 
+    // 如果存在有效别名，直接返回
     if (existingToken) {
       return {
         token: existingToken,
@@ -700,6 +793,7 @@ export const mockApi = {
       };
     }
 
+    // 生成新的短链接
     const newToken = generateShortLink(agentId, boundKey.key);
     if (newToken) {
       return {
@@ -709,6 +803,8 @@ export const mockApi = {
       };
     }
 
+    // 如果生成失败，记录错误并返回null
+    console.error("Failed to generate short link for agent:", agentId);
     return null;
   },
 
@@ -791,5 +887,18 @@ export const mockApi = {
       usageCount: 0,
       maxUsage: 1,
     };
+  },
+
+  // 添加生成中文姓名的辅助方法（如果不存在）
+  generateChineseName() {
+    const nameChars =
+      "梦琪忆柳之桃慕青初夏沛菡傲珊曼文乐菱惜文香菡新柔语蓉海安夜蓉涵柏水桃醉蓝语琴从彤傲晴语兰又菱碧彤元霜怜梦紫寒妙彤曼易南蓮紫翠雨寒易烟如萱若南寻真晓亦向珊慕靈水凡".split(
+        ""
+      );
+    let name = "";
+    for (let i = 0; i < 4; i++) {
+      name += nameChars[Math.floor(Math.random() * nameChars.length)];
+    }
+    return name;
   },
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAuthStore } from "@/lib/stores/authStore";
+import { useAuthContext } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -15,12 +15,17 @@ import {
 
 export function LoginForm() {
   const [key, setKey] = useState("");
-  const { login, isLoading, error } = useAuthStore();
+  const { login, isLoading, error, clearError } = useAuthContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!key) return;
-    await login(key);
+    if (!key.trim()) return;
+
+    clearError(); // 清除之前的错误
+    const success = await login(key);
+    if (success) {
+      setKey(""); // 登录成功后清空输入
+    }
   };
 
   return (
@@ -41,6 +46,7 @@ export function LoginForm() {
             autoComplete="username"
             aria-hidden="true"
             className="hidden-input"
+            title="用户名字段"
           />
           <div className="relative">
             <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -55,6 +61,7 @@ export function LoginForm() {
               className="pl-10"
               autoFocus
               autoComplete="current-password"
+              title="访问密钥"
             />
           </div>
         </CardContent>

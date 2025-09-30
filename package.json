@@ -4,17 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack --port 9002",
-    "dev:full": "node scripts/start-simple.js",
     "dev:ws": "npx tsx src/server/websocket-server.ts",
-    "dev:complete": "node scripts/start-with-websocket.js",
-    "dev:windows": "node scripts/start-windows.js",
+    "dev:with-ws": "node scripts/start-with-websocket.js",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:integration": "echo 'Open http://localhost:3001 and press Ctrl+Shift+P for performance panel'",
     "verify": "node scripts/verify-setup.js"
   },
   "dependencies": {

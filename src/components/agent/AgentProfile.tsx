@@ -1,7 +1,7 @@
 "use client";
 
 import { useAgentStore } from "@/lib/stores/agentStore";
-import { useAuthStore } from "@/lib/stores/authStore";
+import { useAuthContext } from "@/lib/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
   DropdownMenu,
@@ -23,7 +23,7 @@ import { ShareDialog } from "./ShareDialog";
 
 export function AgentProfile() {
   const { agent, updateStatus } = useAgentStore();
-  const { logout, user } = useAuthStore();
+  const { logout, user } = useAuthContext();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
 

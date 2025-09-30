@@ -9,7 +9,7 @@ import {
   WebSocketEventType,
   type WebSocketEventHandler,
 } from "@/lib/websocket";
-import { useAuthStore } from "@/lib/stores/authStore";
+import { useAuthContext } from "@/lib/auth";
 import { useAgentStore } from "@/lib/stores/agentStore";
 import { logger } from "@/lib/logger";
 
@@ -22,7 +22,7 @@ export interface UseWebSocketOptions {
 
 export function useWebSocket(options: UseWebSocketOptions = {}) {
   const { autoConnect = true, events = {} } = options;
-  const { user } = useAuthStore();
+  const { user } = useAuthContext();
   const unsubscribersRef = useRef<(() => void)[]>([]);
 
   // 连接WebSocket

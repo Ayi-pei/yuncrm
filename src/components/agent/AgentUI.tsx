@@ -2,14 +2,14 @@
 
 import { useEffect } from "react";
 import { useAgentStore } from "@/lib/stores/agentStore";
-import { useAuthStore } from "@/lib/stores/authStore";
+import { useAuthContext } from "@/lib/auth";
 import { CustomerList } from "./CustomerList";
-import { ChatWindow } from "./ChatWindow";
+import { UnifiedChatWindow } from "./UnifiedChatWindow";
 import { Skeleton } from "../ui/skeleton";
 import { MessageCircle } from "lucide-react";
 
 export function AgentUI() {
-  const { user } = useAuthStore();
+  const { user } = useAuthContext();
   const {
     fetchAgentData,
     isLoading,
@@ -38,7 +38,14 @@ export function AgentUI() {
     <div className="flex h-full">
       <CustomerList />
       {activeSession && activeCustomer ? (
-        <ChatWindow session={activeSession} customer={activeCustomer} />
+        <UnifiedChatWindow 
+          session={activeSession} 
+          customer={activeCustomer}
+          showCustomerDetails={true}
+          enableWebSocket={true}
+          enableAIRedaction={true}
+          enablePerformanceMonitoring={true}
+        />
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center text-center text-muted-foreground bg-muted/30">
           <MessageCircle size={48} className="mb-4" />

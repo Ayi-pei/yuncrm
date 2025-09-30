@@ -13,7 +13,7 @@ import { Headset, KeyRound, Users, BarChart3, LogOut, Settings } from "lucide-re
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { APP_NAME } from "@/lib/constants";
-import { useAuthStore } from "@/lib/stores/authStore";
+import { useAuthContext } from "@/lib/auth";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
@@ -25,7 +25,7 @@ const menuItems = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
-  const { user, logout } = useAuthStore();
+  const { user, logout } = useAuthContext();
 
   return (
     <Sidebar side="left" collapsible="icon">

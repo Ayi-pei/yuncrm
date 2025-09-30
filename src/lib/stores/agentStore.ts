@@ -84,9 +84,11 @@ export const useAgentStore = create<AgentState>((set, get) => ({
 
   fetchAgentData: async (agentId) => {
     set({ isLoading: true });
+    console.log("fetchAgentData called with agentId:", agentId);
     try {
       const resp = await fetch(`/api/agent/${encodeURIComponent(agentId)}`);
       const json = await resp.json();
+      console.log("API response:", json);
       const data = resp.ok && json?.success ? json.data : null;
       if (data) {
         set({
@@ -115,6 +117,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         });
       }
     } catch (e) {
+      console.error("Error in fetchAgentData:", e);
       set({
         error: e instanceof Error ? e.message : "Failed to fetch agent data",
         isLoading: false,
@@ -159,7 +162,9 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     const updatedAgent = await mockApi.updateAgentProfile(agentId, updates);
     if (updatedAgent) {
       // 更新单个agent对象
-      set({ agent: updatedAgent });
+      set((state) => ({
+        agent: state.agent ? { ...state.agent, ...updates } : null,
+      }));
 
       // 同时更新sessions中所有消息的agent信息
       set((state) => ({

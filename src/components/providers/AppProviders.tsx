@@ -1,51 +1,27 @@
 "use client";
 
-import { useAuthStore } from "@/lib/stores/authStore";
+import { useAuthContext, checkRoutePermission } from "@/lib/auth";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { Headset } from "lucide-react";
 import { APP_NAME } from "@/lib/constants";
 
-const protectedRoutes = {
-  admin: "/admin",
-  agent: "/agent",
-};
-
 export function AppProviders({ children }: { children: React.ReactNode }) {
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthContext();
   const pathname = usePathname();
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     const userRole = user?.role;
-    const isAuthRoute = pathname === "/";
-    const isAdminRoute = pathname.startsWith(protectedRoutes.admin);
-    const isAgentRoute = pathname.startsWith(protectedRoutes.agent);
-    const isChatRoute = pathname.startsWith("/naoiod");
+    const { allowed, redirectTo } = checkRoutePermission(pathname, userRole);
 
-    if (isChatRoute) {
-      setIsChecking(false);
+    if (!allowed && redirectTo) {
+      router.push(redirectTo);
       return;
     }
 
-    if (userRole) {
-      if (isAuthRoute) {
-        router.push(`/${userRole}`);
-      } else if (isAdminRoute && userRole !== "admin") {
-        router.push("/agent");
-      } else if (isAgentRoute && userRole !== "agent") {
-        router.push("/admin");
-      } else {
-        setIsChecking(false);
-      }
-    } else {
-      if (!isAuthRoute) {
-        router.push("/");
-      } else {
-        setIsChecking(false);
-      }
-    }
+    setIsChecking(false);
   }, [user, pathname, router]);
 
   if (isChecking) {

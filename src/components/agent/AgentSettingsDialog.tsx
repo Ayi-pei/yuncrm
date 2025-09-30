@@ -10,7 +10,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { useAgentStore } from "@/lib/stores/agentStore";
 import { AppConfig } from "@/lib/config";
-import { useAuthStore } from "@/lib/stores/authStore";
+import { useAuthContext } from "@/lib/auth";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -55,7 +55,7 @@ export function AgentSettingsDialog({
     invalidateAliases,
     fetchAgentData,
   } = useAgentStore();
-  const { updateCurrentUser } = useAuthStore();
+  const { updateUser } = useAuthContext();
   const { toast } = useToast();
   const agentIdRef = useRef<string | null>(null); // 添加 ref 来跟踪 agent ID
 
@@ -136,10 +136,8 @@ export function AgentSettingsDialog({
 
     try {
       await updateProfile(agent.id, { name });
-      updateCurrentUser({ name });
+      updateUser({ name });
       setName(name); // 立即更新对话框及 AvatarFallback
-      // 刷新agent数据以确保状态同步
-      await fetchAgentData(agent.id);
       toast({ title: "个人资料已更新", description: "您的显示名称已更改。" });
     } catch (error) {
       toast({
@@ -155,11 +153,9 @@ export function AgentSettingsDialog({
     try {
       const newAvatar = `https://i.pravatar.cc/150?u=${Date.now()}`;
       await updateProfile(agent.id, { avatar: newAvatar });
-      updateCurrentUser({ avatar: newAvatar });
+      updateUser({ avatar: newAvatar });
       // 立即更新本地组件状态，保证 Avatar 预览马上变化
       setAvatar(newAvatar);
-      // 可选：如果你希望使用 fetchAgentData 来同步更多字段，可以仍然调用
-      await fetchAgentData(agent.id);
       invalidateAliases();
       toast({ title: "头像已更新", description: "已生成新的随机头像。" });
     } catch (error) {
@@ -208,9 +204,8 @@ export function AgentSettingsDialog({
         try {
           const newAvatar = reader.result as string;
           await updateProfile(agent!.id, { avatar: newAvatar });
-          updateCurrentUser({ avatar: newAvatar });
+          updateUser({ avatar: newAvatar });
           setAvatar(newAvatar); // 立即更新本地预览
-          await fetchAgentData(agent!.id);
           invalidateAliases();
           toast({ title: "头像已更新", description: "您的头像已成功上传。" });
         } catch (error) {
